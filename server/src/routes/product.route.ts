@@ -1,5 +1,4 @@
-import express from "express";
-import {Router} from "express";
+import { Router } from "express";
 import {authenticate, requireRole} from "../middleware/auth.js";
 import { getProducts,
       getProductById,
