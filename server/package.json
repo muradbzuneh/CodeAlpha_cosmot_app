@@ -1,0 +1,28 @@
+{
+  "name": "Cosmot_app-server",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Cosmot API — Express + Prisma + Neon Postgres",
+  "scripts": {
+    "dev": "/src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:studio": "prisma studio",
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "nodemon": "^3.1.14",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6"
+  }
+}
