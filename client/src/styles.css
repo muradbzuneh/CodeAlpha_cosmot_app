@@ -1,0 +1,92 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-stone-soft: var(--stone-soft);
+  --color-ink: var(--ink);
+  --font-display: "Cormorant Garamond", ui-serif, Georgia, serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --radius: 1rem;
+}
+
+:root {
+  /* Vellum satin tactile palette */
+  --background: hsl(30 20% 98%);
+  --foreground: hsl(24 10% 15%);
+  --card: hsl(30 20% 99%);
+  --card-foreground: hsl(24 10% 15%);
+  --popover: hsl(30 20% 99%);
+  --popover-foreground: hsl(24 10% 15%);
+  --primary: hsl(24 10% 15%);
+  --primary-foreground: hsl(30 20% 98%);
+  --secondary: hsl(30 15% 94%);
+  --secondary-foreground: hsl(24 10% 15%);
+  --muted: hsl(30 15% 94%);
+  --muted-foreground: hsl(24 5% 45%);
+  --accent: hsl(32 30% 45%);
+  --accent-foreground: hsl(30 20% 98%);
+  --destructive: hsl(0 60% 45%);
+  --destructive-foreground: hsl(30 20% 98%);
+  --border: hsl(24 10% 15% / 0.08);
+  --input: hsl(24 10% 15% / 0.12);
+  --ring: hsl(32 30% 45%);
+  --stone-soft: hsl(30 18% 95%);
+  --ink: hsl(24 14% 10%);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+}
+
+@utility no-scrollbar {
+  &::-webkit-scrollbar { display: none; }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@utility animate-fade-up {
+  animation: fade-up 0.8s var(--ease-out-expo) both;
+}
