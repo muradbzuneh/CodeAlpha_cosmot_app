@@ -2,7 +2,7 @@ import { useState } from "react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductCard } from "@/components/product-card";
-import { products } from "@/lib/products";
+import { useProducts, type ApiProduct } from "@/lib/products-api";
 import heroImg from "@/assets/hero-cream.jpg";
 import ingredientImg from "@/assets/ingredient-oil.jpg";
 import journalMorning from "@/assets/journal-morning.jpg";
@@ -20,15 +20,16 @@ const FILTERS: { key: Filter; label: string }[] = [
 ];
 
 const COLLECTIONS = [
-  { label: "For Her", sub: "Women", filter: (p: typeof products[number]) => p.gender !== "men" },
-  { label: "For Him", sub: "Men", filter: (p: typeof products[number]) => p.gender !== "women" },
-  { label: "Teen Skin", sub: "Age 13–19", filter: (p: typeof products[number]) => p.age === "teen" || p.age === "adult" },
-  { label: "Mature", sub: "Age 40+", filter: (p: typeof products[number]) => p.age === "mature" },
-  { label: "Face", sub: "Body part", filter: (p: typeof products[number]) => p.bodyPart === "face" },
-  { label: "Lips", sub: "Body part", filter: (p: typeof products[number]) => p.bodyPart === "lips" },
+  { label: "For Her", sub: "Women", filter: (p: ApiProduct) => p.gender !== "men" },
+  { label: "For Him", sub: "Men", filter: (p: ApiProduct) => p.gender !== "women" },
+  { label: "Teen Skin", sub: "Age 13–19", filter: (p: ApiProduct) => p.age === "teen" || p.age === "adult" },
+  { label: "Mature", sub: "Age 40+", filter: (p: ApiProduct) => p.age === "mature" },
+  { label: "Face", sub: "Body part", filter: (p: ApiProduct) => p.bodyPart === "face" },
+  { label: "Lips", sub: "Body part", filter: (p: ApiProduct) => p.bodyPart === "lips" },
 ];
 
 export function Home() {
+  const { products } = useProducts();
   const [filter, setFilter] = useState<Filter>("all");
   const filtered = filter === "all" ? products : products.filter((p) => p.category === filter);
   const newReleases = products.filter((p) => p.isNew);

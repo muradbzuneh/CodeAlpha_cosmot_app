@@ -9,6 +9,7 @@ import {
 import appCss from "../styles.css?url";
 import { CartProvider } from "@/lib/cart";
 import { AuthProvider } from "@/lib/auth";
+import { ProductProvider } from "@/lib/products-api";
 
 function NotFoundComponent() {
   return (
@@ -98,9 +99,11 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <CartProvider>
-          <Outlet />
-        </CartProvider>
+        <ProductProvider>
+          <CartProvider>
+            <Outlet />
+          </CartProvider>
+        </ProductProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

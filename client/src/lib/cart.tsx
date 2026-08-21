@@ -6,9 +6,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { products, type Product } from "./products";
+import { useProducts, type ApiProduct } from "./products-api";
 
 export type CartItem = { id: string; qty: number };
+
+type CartLine = { product: ApiProduct; qty: number; lineTotal: number };
 
 type CartCtx = {
   items: CartItem[];
@@ -17,7 +19,7 @@ type CartCtx = {
   setQty: (id: string, qty: number) => void;
   clear: () => void;
   count: number;
-  lines: Array<{ product: Product; qty: number; lineTotal: number }>;
+  lines: CartLine[];
   subtotal: number;
   discount: number;
   vat: number;
@@ -35,6 +37,7 @@ const STORAGE_KEY = "cosmot-cart-v1";
 const PROMO_KEY = "cosmot-promo-v1";
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { productMap } = useProducts();
   const [items, setItems] = useState<CartItem[]>([]);
   const [promo, setPromo] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -63,11 +66,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const value = useMemo<CartCtx>(() => {
     const lines = items
       .map((it) => {
-        const product = products.find((p) => p.id === it.id);
+        const product = productMap.get(it.id);
         if (!product) return null;
         return { product, qty: it.qty, lineTotal: product.price * it.qty };
       })
-      .filter(Boolean) as CartCtx["lines"];
+      .filter(Boolean) as CartLine[];
 
     const subtotal = lines.reduce((s, l) => s + l.lineTotal, 0);
     const discountRate = promo ? PROMOS[promo] ?? 0 : 0;
@@ -109,7 +112,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       },
       clearPromo: () => setPromo(null),
     };
-  }, [items, promo]);
+  }, [items, promo, productMap]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

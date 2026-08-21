@@ -58,7 +58,7 @@ export function CartPage() {
                   >
                     <div className="aspect-square rounded-xl overflow-hidden bg-stone-100">
                       <img
-                        src={l.product.image}
+                        src={l.product.imageUrl || "/placeholder.jpg"}
                         alt={l.product.name}
                         loading="lazy"
                         width={200}
@@ -70,7 +70,7 @@ export function CartPage() {
                       <div>
                         <h3 className="font-medium text-sm md:text-base truncate">{l.product.name}</h3>
                         <p className="text-[10px] md:text-xs text-muted-foreground italic font-display">
-                          {l.product.tagline} · {l.product.size}
+                          {l.product.description}
                         </p>
                         <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
                           {fmt(l.product.price)} each

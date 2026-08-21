@@ -171,7 +171,7 @@ export function CheckoutPage() {
                   {lines.map((l) => (
                     <div key={l.product.id} className="flex gap-3">
                       <div className="relative size-14 rounded-lg overflow-hidden bg-stone-100 shrink-0">
-                        <img src={l.product.image} alt="" className="w-full h-full object-cover" />
+                        <img src={l.product.imageUrl || "/placeholder.jpg"} alt="" className="w-full h-full object-cover" />
                         <span className="absolute -top-1 -right-1 size-5 rounded-full bg-foreground text-background text-[10px] grid place-items-center">
                           {l.qty}
                         </span>
@@ -179,7 +179,7 @@ export function CheckoutPage() {
                       <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
                         <div className="min-w-0">
                           <p className="text-xs font-medium truncate">{l.product.name}</p>
-                          <p className="text-[10px] text-muted-foreground">{l.product.size}</p>
+                          <p className="text-[10px] text-muted-foreground">{l.product.size || ""}</p>
                         </div>
                         <span className="text-xs tabular-nums">{fmt(l.lineTotal)}</span>
                       </div>

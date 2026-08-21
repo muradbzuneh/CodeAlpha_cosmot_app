@@ -2,12 +2,14 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useCart } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
-import type { Product } from "@/lib/products";
+import type { ApiProduct } from "@/lib/products-api";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product }: { product: ApiProduct }) {
   const { add } = useCart();
   const { isAuthenticated } = useAuth();
   const [added, setAdded] = useState(false);
+
+  const img = product.imageUrl || "/placeholder.jpg";
 
   const handleAdd = () => {
     if (!isAuthenticated) return;
@@ -21,7 +23,7 @@ export function ProductCard({ product }: { product: Product }) {
       <article className="group">
         <div className="relative w-full aspect-[4/5] bg-stone-100 rounded-2xl overflow-hidden mb-4">
           <img
-            src={product.image}
+            src={img}
             alt={product.name}
             loading="lazy"
             width={640}
@@ -35,9 +37,6 @@ export function ProductCard({ product }: { product: Product }) {
           )}
         </div>
         <h3 className="text-xs font-medium uppercase tracking-tight font-body">{product.name}</h3>
-        <p className="text-[10px] text-muted-foreground italic font-display">
-          {product.tagline}
-        </p>
         <p className="text-[11px] text-muted-foreground mt-1 leading-snug line-clamp-2">
           {product.description}
         </p>
@@ -58,7 +57,7 @@ export function ProductCard({ product }: { product: Product }) {
     <article className="group">
       <div className="relative w-full aspect-[4/5] bg-stone-100 rounded-2xl overflow-hidden mb-4">
         <img
-          src={product.image}
+          src={img}
           alt={product.name}
           loading="lazy"
           width={640}
@@ -72,9 +71,6 @@ export function ProductCard({ product }: { product: Product }) {
         )}
       </div>
       <h3 className="text-xs font-medium uppercase tracking-tight font-body">{product.name}</h3>
-      <p className="text-[10px] text-muted-foreground italic font-display">
-        {product.tagline}
-      </p>
       <p className="text-[11px] text-muted-foreground mt-1 leading-snug line-clamp-2">
         {product.description}
       </p>
