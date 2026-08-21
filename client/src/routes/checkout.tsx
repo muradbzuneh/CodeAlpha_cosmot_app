@@ -4,6 +4,7 @@ import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { useCart, fmt } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
+import { api } from "@/lib/api";
 
 type Payment = "telebirr" | "bank" | "card" | "cod";
 
@@ -13,6 +14,9 @@ export function CheckoutPage() {
   const { lines, subtotal, discount, vat, total, promo, clear } = useCart();
   const [payment, setPayment] = useState<Payment>("telebirr");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [address, setAddress] = useState("");
+  const [orderResult, setOrderResult] = useState<{ id: string; total: number } | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -24,6 +28,34 @@ export function CheckoutPage() {
 
   const shipping = subtotal >= 4500 ? 0 : 450;
   const grand = total + shipping;
+
+  if (orderResult) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteNav />
+        <main className="px-4 md:px-8 py-16 md:py-24">
+          <div className="mx-auto max-w-lg text-center">
+            <div className="mb-6 text-5xl">✓</div>
+            <p className="text-[10px] uppercase tracking-[0.25em] text-accent mb-3">Order confirmed</p>
+            <h1 className="font-display text-4xl md:text-5xl italic mb-4">Thank you</h1>
+            <p className="text-muted-foreground text-sm mb-2">
+              Your order <span className="font-medium text-foreground">{orderResult.id.slice(0, 8)}...</span> has been placed.
+            </p>
+            <p className="text-muted-foreground text-sm mb-8">
+              Total: <span className="font-medium text-foreground">{fmt(orderResult.total)}</span>
+            </p>
+            <Link
+              to="/"
+              className="inline-flex px-7 py-3.5 bg-foreground text-background rounded-full text-xs uppercase tracking-widest"
+            >
+              Continue shopping
+            </Link>
+          </div>
+        </main>
+        <SiteFooter />
+      </div>
+    );
+  }
 
   if (lines.length === 0) {
     return (
@@ -46,14 +78,25 @@ export function CheckoutPage() {
     );
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setSubmitting(true);
-    setTimeout(() => {
+    try {
+      const order = await api.createOrder({
+        address,
+        items: lines.map((l) => ({
+          productId: l.product.id,
+          quantity: l.qty,
+        })),
+      });
       clear();
-      alert(`Order placed via ${payment.toUpperCase()}. A confirmation will arrive shortly.`);
-      navigate({ to: "/" });
-    }, 900);
+      setOrderResult({ id: order.id, total: order.total });
+    } catch (err: any) {
+      setError(err.message || "Failed to place order");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -78,7 +121,7 @@ export function CheckoutPage() {
 
               <Section title="Delivery">
                 <div className="grid sm:grid-cols-2 gap-3">
-                  <Input label="Address" required placeholder="Bole, Sub-city 03" className="sm:col-span-2" />
+                  <Input label="Address" required placeholder="Bole, Sub-city 03" className="sm:col-span-2" value={address} onChange={(e) => setAddress(e.target.value)} />
                   <Input label="City" required placeholder="Addis Ababa" />
                   <Input label="Postal code" placeholder="1000" />
                 </div>
@@ -198,6 +241,9 @@ export function CheckoutPage() {
                   <span className="text-xl font-medium tabular-nums">{fmt(grand)}</span>
                 </div>
 
+                {error && (
+                  <p className="text-sm text-destructive bg-destructive/10 px-4 py-2.5 rounded-xl">{error}</p>
+                )}
                 <button
                   type="submit"
                   disabled={submitting}
