@@ -4,6 +4,13 @@ import { prisma } from "../lib/prisma.js";
 
 const createOrderSchema = z.object({
   address: z.string().min(1),
+  city: z.string().optional(),
+  postalCode: z.string().optional(),
+  customerName: z.string().optional(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  paymentMethod: z.string().optional(),
+  shipping: z.string().optional(),
   items: z
     .array(
       z.object({
@@ -52,6 +59,13 @@ export async function createOrder(req: Request, res: Response) {
           userId: req.user!.sub,
           total,
           address: body.address,
+          city: body.city ?? null,
+          postalCode: body.postalCode ?? null,
+          customerName: body.customerName ?? null,
+          email: body.email ?? null,
+          phone: body.phone ?? null,
+          paymentMethod: body.paymentMethod ?? null,
+          shipping: body.shipping ?? "standard",
           items: {
             create: body.items.map((item) => ({
               productId: item.productId,
@@ -60,7 +74,7 @@ export async function createOrder(req: Request, res: Response) {
             })),
           },
         },
-        include: { items: true },
+        include: { items: { include: { product: true } } },
       });
 
       for (const item of body.items) {
@@ -90,7 +104,7 @@ export async function getOrders(req: Request, res: Response) {
     const orders = await prisma.order.findMany({
       where,
       include: {
-        items: true,
+        items: { include: { product: true } },
         user: { select: { id: true, email: true, name: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -107,7 +121,7 @@ export async function getOrderById(req: Request, res: Response) {
     const order = await prisma.order.findUnique({
       where: { id: req.params.id },
       include: {
-        items: true,
+        items: { include: { product: true } },
         user: { select: { id: true, email: true, name: true } },
       },
     });

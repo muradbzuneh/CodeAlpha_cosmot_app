@@ -77,21 +77,40 @@ export const api = {
     }>>("/products"),
 
   // Orders
-  createOrder: (data: { address: string; items: { productId: string; quantity: number }[] }) =>
-    request<{
-      id: string;
-      total: number;
-      status: string;
-      items: Array<{ id: string; productId: string; quantity: number; price: number }>;
-    }>("/orders", { method: "POST", body: JSON.stringify(data) }),
+  createOrder: (data: {
+    address: string;
+    city?: string;
+    postalCode?: string;
+    customerName?: string;
+    email?: string;
+    phone?: string;
+    paymentMethod?: string;
+    shipping?: string;
+    items: { productId: string; quantity: number }[];
+  }) =>
+    request<ApiOrder>("/orders", { method: "POST", body: JSON.stringify(data) }),
 
-  getOrders: () =>
-    request<Array<{
-      id: string;
-      status: string;
-      total: number;
-      address: string | null;
-      createdAt: string;
-      items: Array<{ id: string; productId: string; quantity: number; price: number }>;
-    }>>("/orders"),
+  getOrders: () => request<ApiOrder[]>("/orders"),
+};
+
+export type ApiOrder = {
+  id: string;
+  status: string;
+  total: number;
+  address: string | null;
+  city: string | null;
+  postalCode: string | null;
+  customerName: string | null;
+  email: string | null;
+  phone: string | null;
+  paymentMethod: string | null;
+  shipping: string;
+  createdAt: string;
+  items: Array<{
+    id: string;
+    productId: string;
+    quantity: number;
+    price: number;
+    product: { name: string; imageUrl: string | null } | null;
+  }>;
 };

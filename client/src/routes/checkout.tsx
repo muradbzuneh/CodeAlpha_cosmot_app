@@ -15,8 +15,14 @@ export function CheckoutPage() {
   const [payment, setPayment] = useState<Payment>("telebirr");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [address, setAddress] = useState("");
   const [orderResult, setOrderResult] = useState<{ id: string; total: number } | null>(null);
+
+  const [customerName, setCustomerName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [postalCode, setPostalCode] = useState("");
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -44,12 +50,20 @@ export function CheckoutPage() {
             <p className="text-muted-foreground text-sm mb-8">
               Total: <span className="font-medium text-foreground">{fmt(orderResult.total)}</span>
             </p>
-            <Link
-              to="/"
-              className="inline-flex px-7 py-3.5 bg-foreground text-background rounded-full text-xs uppercase tracking-widest"
-            >
-              Continue shopping
-            </Link>
+            <div className="flex gap-3 justify-center">
+              <Link
+                to="/orders"
+                className="inline-flex px-7 py-3.5 bg-foreground text-background rounded-full text-xs uppercase tracking-widest"
+              >
+                Track order
+              </Link>
+              <Link
+                to="/"
+                className="inline-flex px-7 py-3.5 border border-foreground rounded-full text-xs uppercase tracking-widest hover:bg-stone-50 transition"
+              >
+                Continue shopping
+              </Link>
+            </div>
           </div>
         </main>
         <SiteFooter />
@@ -85,6 +99,13 @@ export function CheckoutPage() {
     try {
       const order = await api.createOrder({
         address,
+        city: city || undefined,
+        postalCode: postalCode || undefined,
+        customerName: customerName || undefined,
+        email: email || undefined,
+        phone: phone || undefined,
+        paymentMethod: payment,
+        shipping: shipping === 0 ? "standard" : "express",
         items: lines.map((l) => ({
           productId: l.product.id,
           quantity: l.qty,
@@ -113,17 +134,17 @@ export function CheckoutPage() {
             <div className="space-y-10">
               <Section title="Contact">
                 <div className="grid sm:grid-cols-2 gap-3">
-                  <Input label="Full name" required placeholder="Selam Tadesse" />
-                  <Input label="Email" type="email" required placeholder="you@cosmot.et" />
-                  <Input label="Phone" type="tel" required placeholder="+251 911 000 000" />
+                  <Input label="Full name" required placeholder="Selam Tadesse" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+                  <Input label="Email" type="email" required placeholder="you@cosmot.et" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <Input label="Phone" type="tel" required placeholder="+251 911 000 000" value={phone} onChange={(e) => setPhone(e.target.value)} />
                 </div>
               </Section>
 
               <Section title="Delivery">
                 <div className="grid sm:grid-cols-2 gap-3">
                   <Input label="Address" required placeholder="Bole, Sub-city 03" className="sm:col-span-2" value={address} onChange={(e) => setAddress(e.target.value)} />
-                  <Input label="City" required placeholder="Addis Ababa" />
-                  <Input label="Postal code" placeholder="1000" />
+                  <Input label="City" required placeholder="Addis Ababa" value={city} onChange={(e) => setCity(e.target.value)} />
+                  <Input label="Postal code" placeholder="1000" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
                 </div>
                 <div className="mt-4 grid sm:grid-cols-2 gap-3">
                   <ShippingOption

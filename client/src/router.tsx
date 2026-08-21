@@ -5,6 +5,7 @@ import { CartPage } from "./routes/cart";
 import { CheckoutPage } from "./routes/checkout";
 import { LoginPage } from "./routes/login";
 import { RegisterPage } from "./routes/register";
+import { OrdersPage } from "./routes/orders";
 import { Route as rootRoute } from "./routes/__root";
 
 const indexRoute = createRoute({
@@ -37,12 +38,19 @@ const registerRoute = createRoute({
   component: RegisterPage,
 });
 
+const ordersRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/orders",
+  component: OrdersPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   cartRoute,
   checkoutRoute,
   loginRoute,
   registerRoute,
+  ordersRoute,
 ]);
 
 export const getRouter = () => {

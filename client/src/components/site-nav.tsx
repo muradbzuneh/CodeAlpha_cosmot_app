@@ -46,6 +46,12 @@ export function SiteNav() {
             {isAuthenticated ? (
               <>
                 <Link
+                  to="/orders"
+                  className="hidden md:inline-flex text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Orders
+                </Link>
+                <Link
                   to="/cart"
                   aria-label="Cart"
                   className="relative size-9 grid place-items-center rounded-full border border-foreground text-[11px] font-medium tabular-nums hover:bg-foreground hover:text-background transition-colors"
@@ -99,6 +105,9 @@ export function SiteNav() {
               <div className="border-t border-border pt-4 mt-2">
                 {isAuthenticated ? (
                   <>
+                    <Link to="/orders" onClick={() => setOpen(false)} className="py-1 block">
+                      My Orders
+                    </Link>
                     <Link to="/cart" onClick={() => setOpen(false)} className="py-1 block">
                       Cart ({count})
                     </Link>
