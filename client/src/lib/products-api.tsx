@@ -5,22 +5,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { api } from "./api";
+import { api, type ApiProduct } from "./api";
 
-export type ApiProduct = {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  stock: number;
-  imageUrl: string | null;
-  category: string | null;
-  gender: string | null;
-  age: string | null;
-  bodyPart: string | null;
-  size: string | null;
-  isNew: boolean | null;
-};
+export type { ApiProduct };
 
 type ProductCtx = {
   products: ApiProduct[];
@@ -43,8 +30,8 @@ export function ProductProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     api
-      .getProducts()
-      .then(setProducts)
+      .getProducts({ limit: 100 })
+      .then((res) => setProducts(res.products))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);

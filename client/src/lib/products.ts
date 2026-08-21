@@ -1,13 +1,4 @@
-import balm from "@/assets/product-balm.jpg";
-import tint from "@/assets/product-tint.jpg";
-import serum from "@/assets/product-serum.jpg";
-import cleanser from "@/assets/product-cleanser.jpg";
-import lipstick from "@/assets/product-lipstick.jpg";
-import mask from "@/assets/product-mask.jpg";
-import oil from "@/assets/product-oil.jpg";
-import powder from "@/assets/product-powder.jpg";
-import eye from "@/assets/product-eye.jpg";
-import mist from "@/assets/product-mist.jpg";
+
 
 export type Product = {
   id: string;

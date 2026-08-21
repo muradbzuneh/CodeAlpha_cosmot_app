@@ -1,3 +1,19 @@
+export type ApiProduct = {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  stock: number;
+  imageUrl: string | null;
+  category: string | null;
+  gender: string | null;
+  age: string | null;
+  bodyPart: string | null;
+  size: string | null;
+  isNew: boolean | null;
+  createdAt?: string;
+};
+
 const API_BASE = "/api";
 
 async function request<T>(
@@ -33,6 +49,17 @@ async function request<T>(
   return res.json();
 }
 
+export type ProductFilters = {
+  page?: number;
+  limit?: number;
+  category?: string;
+  gender?: string;
+  age?: string;
+  search?: string;
+  minPrice?: number;
+  maxPrice?: number;
+};
+
 export const api = {
   // Auth
   register: (data: { email: string; password: string; name?: string }) =>
@@ -59,22 +86,27 @@ export const api = {
     }>("/auth/me"),
 
   // Products
-  getProducts: () =>
-    request<Array<{
-      id: string;
-      name: string;
-      description: string | null;
-      price: number;
-      stock: number;
-      imageUrl: string | null;
-      category: string | null;
-      gender: string | null;
-      age: string | null;
-      bodyPart: string | null;
-      size: string | null;
-      isNew: boolean | null;
-      createdAt: string;
-    }>>("/products"),
+  getProducts: (params?: ProductFilters) => {
+    const q = new URLSearchParams();
+    if (params?.page) q.set("page", String(params.page));
+    if (params?.limit) q.set("limit", String(params.limit));
+    if (params?.category && params.category !== "all") q.set("category", params.category);
+    if (params?.gender && params.gender !== "all") q.set("gender", params.gender);
+    if (params?.age && params.age !== "all") q.set("age", params.age);
+    if (params?.search) q.set("search", params.search);
+    if (params?.minPrice != null) q.set("minPrice", String(params.minPrice));
+    if (params?.maxPrice != null) q.set("maxPrice", String(params.maxPrice));
+    const qs = q.toString();
+    return request<{
+      products: ApiProduct[];
+      total: number;
+      page: number;
+      totalPages: number;
+    }>(`/products${qs ? `?${qs}` : ""}`);
+  },
+
+  getProduct: (id: string) =>
+    request<ApiProduct>(`/products/${id}`),
 
   // Orders
   createOrder: (data: {

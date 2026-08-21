@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCart } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
+import { api, type ApiProduct } from "@/lib/api";
+import { fmt } from "@/lib/cart";
 
 const links = [
   { to: "/", label: "Home" },
@@ -14,6 +16,61 @@ export function SiteNav() {
   const { count } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<ApiProduct[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (searchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (!searchOpen) {
+      setSearchQuery("");
+      setSearchResults([]);
+    }
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setSearchLoading(true);
+    searchTimer.current = setTimeout(async () => {
+      try {
+        const res = await api.getProducts({ search: searchQuery.trim(), limit: 20 });
+        setSearchResults(res.products);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSearchOpen(false);
+    };
+    if (searchOpen) {
+      document.addEventListener("keydown", onKey);
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [searchOpen]);
 
   return (
     <>
@@ -43,6 +100,16 @@ export function SiteNav() {
           </Link>
 
           <div className="flex items-center gap-3">
+            <button
+              aria-label="Search"
+              onClick={() => setSearchOpen(true)}
+              className="size-9 grid place-items-center rounded-full border border-foreground hover:bg-foreground hover:text-background transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+            </button>
+
             {isAuthenticated ? (
               <>
                 <Link
@@ -130,6 +197,78 @@ export function SiteNav() {
           </div>
         )}
       </nav>
+
+      {searchOpen && (
+        <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm animate-fade-up">
+          <div className="mx-auto max-w-3xl px-4 pt-6">
+            <div className="flex items-center gap-4 mb-8">
+              <svg className="w-5 h-5 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search products..."
+                className="flex-1 bg-transparent text-lg md:text-2xl font-display italic placeholder:text-muted-foreground focus:outline-none"
+              />
+              <button
+                onClick={() => setSearchOpen(false)}
+                className="size-9 grid place-items-center rounded-full border border-border hover:border-foreground transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {searchLoading && (
+              <p className="text-center text-muted-foreground text-sm py-12">Searching...</p>
+            )}
+
+            {!searchLoading && searchQuery.trim() && searchResults.length === 0 && (
+              <p className="text-center text-muted-foreground text-sm py-12">No products found for &quot;{searchQuery}&quot;</p>
+            )}
+
+            {!searchLoading && searchResults.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-h-[70vh] overflow-y-auto pb-8">
+                {searchResults.map((p) => (
+                  <Link
+                    key={p.id}
+                    to="/products/$productId"
+                    params={{ productId: p.id }}
+                    onClick={() => setSearchOpen(false)}
+                    className="group"
+                  >
+                    <div className="relative w-full aspect-[4/5] bg-stone-100 rounded-2xl overflow-hidden mb-3">
+                      <img
+                        src={p.imageUrl || "/placeholder.jpg"}
+                        alt={p.name}
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                      />
+                      {p.isNew && (
+                        <span className="absolute top-2 left-2 bg-background/90 backdrop-blur px-2 py-0.5 rounded-full text-[9px] uppercase tracking-widest">
+                          New
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-xs font-medium uppercase tracking-tight">{p.name}</h3>
+                    <p className="text-sm tabular-nums font-medium mt-1">{fmt(p.price)}</p>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {!searchQuery.trim() && (
+              <div className="py-12 text-center">
+                <p className="text-muted-foreground text-sm">Type to search across all products</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
