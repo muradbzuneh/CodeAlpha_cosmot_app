@@ -7,6 +7,10 @@ import { LoginPage } from "./routes/login";
 import { RegisterPage } from "./routes/register";
 import { OrdersPage } from "./routes/orders";
 import { ProductDetailPage } from "./routes/product-detail";
+import { AdminLayout } from "./routes/admin-layout";
+import { AdminDashboard } from "./routes/admin-dashboard";
+import { AdminOrdersPage } from "./routes/admin-orders";
+import { AdminProductsPage } from "./routes/admin-products";
 import { Route as rootRoute } from "./routes/__root";
 
 const indexRoute = createRoute({
@@ -51,6 +55,30 @@ const productDetailRoute = createRoute({
   component: ProductDetailPage,
 });
 
+const adminLayoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "admin",
+  component: AdminLayout,
+});
+
+const adminIndexRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: "/admin",
+  component: AdminDashboard,
+});
+
+const adminOrdersRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: "/admin/orders",
+  component: AdminOrdersPage,
+});
+
+const adminProductsRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: "/admin/products",
+  component: AdminProductsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   cartRoute,
@@ -59,6 +87,11 @@ const routeTree = rootRoute.addChildren([
   registerRoute,
   ordersRoute,
   productDetailRoute,
+  adminLayoutRoute.addChildren([
+    adminIndexRoute,
+    adminOrdersRoute,
+    adminProductsRoute,
+  ]),
 ]);
 
 export const getRouter = () => {

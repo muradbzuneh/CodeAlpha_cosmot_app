@@ -123,6 +123,48 @@ export const api = {
     request<ApiOrder>("/orders", { method: "POST", body: JSON.stringify(data) }),
 
   getOrders: () => request<ApiOrder[]>("/orders"),
+
+  updateOrderStatus: (id: string, status: string) =>
+    request<{ id: string; status: string }>(`/orders/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
+
+  // Admin Stats
+  getStats: () =>
+    request<{
+      totalOrders: number;
+      totalProducts: number;
+      totalUsers: number;
+      totalRevenue: number;
+      ordersByStatus: Record<string, number>;
+      recentOrders: ApiOrder[];
+    }>("/stats"),
+
+  // Admin Products
+  createProduct: (data: Partial<ApiProduct>) =>
+    request<ApiProduct>("/products", { method: "POST", body: JSON.stringify(data) }),
+
+  updateProduct: (id: string, data: Partial<ApiProduct>) =>
+    request<ApiProduct>(`/products/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+
+  deleteProduct: (id: string) =>
+    request<void>(`/products/${id}`, { method: "DELETE" }),
+
+  // Upload
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    const token = localStorage.getItem("cosmot-token");
+    return fetch(`${API_BASE}/upload`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    }).then((res) => {
+      if (!res.ok) throw new Error("Upload failed");
+      return res.json() as Promise<{ url: string; filename: string }>;
+    });
+  },
 };
 
 export type ApiOrder = {

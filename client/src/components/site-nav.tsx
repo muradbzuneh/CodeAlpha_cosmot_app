@@ -112,6 +112,14 @@ export function SiteNav() {
 
             {isAuthenticated ? (
               <>
+                {user?.role === "ADMIN" && (
+                  <Link
+                    to="/admin"
+                    className="hidden md:inline-flex text-[10px] uppercase tracking-widest text-accent font-medium hover:text-foreground transition-colors"
+                  >
+                    Admin
+                  </Link>
+                )}
                 <Link
                   to="/orders"
                   className="hidden md:inline-flex text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
@@ -172,6 +180,11 @@ export function SiteNav() {
               <div className="border-t border-border pt-4 mt-2">
                 {isAuthenticated ? (
                   <>
+                    {user?.role === "ADMIN" && (
+                      <Link to="/admin" onClick={() => setOpen(false)} className="py-1 block">
+                        Admin Dashboard
+                      </Link>
+                    )}
                     <Link to="/orders" onClick={() => setOpen(false)} className="py-1 block">
                       My Orders
                     </Link>

@@ -52,12 +52,12 @@ router.post("/register", async (req, res) => {
     const refreshToken = signRefreshToken(tokenPayload);
 
     res.status(201).json({ user, accessToken, refreshToken });
-  } catch (err) {
+  } catch (err: any) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: "Validation failed", details: err.issues });
     }
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("REGISTER ERROR:", err?.message, err?.stack);
+    res.status(500).json({ error: "Internal server error", detail: err?.message });
   }
 });
 
