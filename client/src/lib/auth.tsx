@@ -21,6 +21,7 @@ type AuthCtx = {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => void;
+  setUser: (user: User) => void;
   isAuthenticated: boolean;
 };
 
@@ -74,6 +75,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        setUser: (u: User) => {
+          setUser(u);
+          localStorage.setItem("cosmot-user", JSON.stringify(u));
+        },
         isAuthenticated: !!token,
       }}
     >

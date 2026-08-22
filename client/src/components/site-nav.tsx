@@ -94,8 +94,9 @@ export function SiteNav() {
 
           <Link
             to="/"
-            className="font-display text-2xl tracking-tight italic select-none text-center justify-self-center"
+            className="font-display text-2xl tracking-tight italic select-none text-center justify-self-center flex items-center gap-2"
           >
+            <img src="/cosmot-logo-1.png" alt="Cosmot" className="h-10 w-16 object-contain rounded-2xl" />
             Cosmot.
           </Link>
 
@@ -121,22 +122,30 @@ export function SiteNav() {
                   </Link>
                 )}
                 <Link
-                  to="/orders"
-                  className="hidden md:inline-flex text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Orders
-                </Link>
-                <Link
                   to="/cart"
                   aria-label="Cart"
                   className="relative size-9 grid place-items-center rounded-full border border-foreground text-[11px] font-medium tabular-nums hover:bg-foreground hover:text-background transition-colors"
                 >
                   {String(count).padStart(2, "0")}
                 </Link>
+
                 <div className="hidden md:flex items-center gap-3">
-                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground max-w-[120px] truncate">
-                    {user?.name || user?.email}
-                  </span>
+                  <Link
+  to="/profile"
+  className="group flex items-center gap-2.5 rounded-full px-2 py-1.5 transition-colors hover:bg-muted/60"
+>
+  {/* Profile avatar */}
+  <span
+    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full
+    bg-black text-sm font-semibold uppercase text-white
+    ring-2 ring-emerald-600/10 transition-all
+    group-hover:ring-emerald-600/30"
+  >
+    {(user?.name?.[0] || user?.email?.[0] || "U").toUpperCase()}
+  </span>
+</Link>
+                 
+
                   <button
                     onClick={logout}
                     className="text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
@@ -187,6 +196,9 @@ export function SiteNav() {
                     )}
                     <Link to="/orders" onClick={() => setOpen(false)} className="py-1 block">
                       My Orders
+                    </Link>
+                    <Link to="/profile" onClick={() => setOpen(false)} className="py-1 block">
+                      Profile
                     </Link>
                     <Link to="/cart" onClick={() => setOpen(false)} className="py-1 block">
                       Cart ({count})

@@ -85,6 +85,15 @@ export const api = {
       createdAt: string;
     }>("/auth/me"),
 
+  updateProfile: (data: { name?: string; email?: string; currentPassword?: string; newPassword?: string }) =>
+    request<{
+      id: string;
+      email: string;
+      name: string | null;
+      role: string;
+      createdAt: string;
+    }>("/auth/profile", { method: "PUT", body: JSON.stringify(data) }),
+
   // Products
   getProducts: (params?: ProductFilters) => {
     const q = new URLSearchParams();

@@ -13,7 +13,10 @@ export function SiteFooter() {
       <div className="mx-auto max-w-6xl">
         <div className="grid md:grid-cols-[2fr_1fr_1fr_1fr] gap-10 mb-12">
           <div>
-            <div className="font-display text-4xl text-stone-100 italic mb-4">Cosmot.</div>
+            <div className="font-display text-4xl text-stone-100 italic mb-4 flex items-center gap-3">
+              <img src="/cosmot-logo.png" alt="" className="h-10 w-16 object-contain rounded" />
+              Cosmot.
+            </div>
             <p className="text-sm text-stone-400 max-w-xs leading-relaxed mb-6">
               Cellular-grade cosmetics formulated in small batches. Ethically sourced, satin to the touch.
             </p>

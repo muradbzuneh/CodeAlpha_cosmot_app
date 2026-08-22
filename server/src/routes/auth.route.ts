@@ -1,6 +1,6 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import jwt, { type SignOptions } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { env } from "../env.js";
@@ -21,14 +21,14 @@ const loginSchema = z.object({
 
 function signAccessToken(payload: { sub: string; email: string; role: string }) {
   return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
-    expiresIn: env.ACCESS_TOKEN_TTL as SignOptions["expiresIn"],
-  });
+    expiresIn: env.ACCESS_TOKEN_TTL,
+  } as any);
 }
 
 function signRefreshToken(payload: { sub: string; email: string; role: string }) {
   return jwt.sign(payload, env.JWT_REFRESH_SECRET, {
-    expiresIn: `${env.REFRESH_TOKEN_TTL_DAYS}d` as SignOptions["expiresIn"],
-  });
+    expiresIn: `${env.REFRESH_TOKEN_TTL_DAYS}d`,
+  } as any);
 }
 
 // POST /api/auth/register
@@ -38,7 +38,8 @@ router.post("/register", async (req, res) => {
 
     const exists = await prisma.user.findUnique({ where: { email: body.email } });
     if (exists) {
-      return res.status(409).json({ error: "Email already registered" });
+      res.status(409).send(JSON.stringify({ error: "Email already registered" }));
+      return;
     }
 
     const hashed = await bcrypt.hash(body.password, 10);
@@ -51,13 +52,14 @@ router.post("/register", async (req, res) => {
     const accessToken = signAccessToken(tokenPayload);
     const refreshToken = signRefreshToken(tokenPayload);
 
-    res.status(201).json({ user, accessToken, refreshToken });
-  } catch (err: any) {
+    res.status(201).send(JSON.stringify({ user, accessToken, refreshToken }));
+  } catch (err) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: "Validation failed", details: err.issues });
+      res.status(400).send(JSON.stringify({ error: "Validation failed", details: err.issues }));
+      return;
     }
-    console.error("REGISTER ERROR:", err?.message, err?.stack);
-    res.status(500).json({ error: "Internal server error", detail: err?.message });
+    console.error("REGISTER ERROR:", err);
+    res.status(500).send(JSON.stringify({ error: "Internal server error" }));
   }
 });
 
@@ -68,12 +70,16 @@ router.post("/login", async (req, res) => {
 
     const user = await prisma.user.findUnique({ where: { email: body.email } });
     if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      res.status(401);
+      res.json({ error: "Invalid credentials" });
+      return;
     }
 
     const valid = await bcrypt.compare(body.password, user.password);
     if (!valid) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      res.status(401);
+      res.json({ error: "Invalid credentials" });
+      return;
     }
 
     const tokenPayload = { sub: user.id, email: user.email, role: user.role };
@@ -87,10 +93,13 @@ router.post("/login", async (req, res) => {
     });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: "Validation failed", details: err.issues });
+      res.status(400);
+      res.json({ error: "Validation failed", details: err.issues });
+      return;
     }
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("LOGIN ERROR:", err);
+    res.status(500);
+    res.json({ error: "Internal server error" });
   }
 });
 
@@ -102,6 +111,60 @@ router.get("/me", authenticate, async (req, res) => {
   });
   if (!user) return res.status(404).json({ error: "User not found" });
   res.json(user);
+});
+
+// PUT /api/auth/profile
+const profileSchema = z.object({
+  name: z.string().optional(),
+  email: z.string().email().optional(),
+  currentPassword: z.string().optional(),
+  newPassword: z.string().min(6).optional(),
+});
+
+router.put("/profile", authenticate, async (req, res) => {
+  try {
+    const body = profileSchema.parse(req.body);
+    const userId = req.user!.sub;
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (body.email && body.email !== user.email) {
+      const exists = await prisma.user.findUnique({ where: { email: body.email } });
+      if (exists) {
+        return res.status(409).json({ error: "Email already in use" });
+      }
+    }
+
+    const updateData: Record<string, any> = {};
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.email !== undefined) updateData.email = body.email;
+
+    if (body.newPassword) {
+      if (!body.currentPassword) {
+        return res.status(400).json({ error: "Current password is required to set a new password" });
+      }
+      const valid = await bcrypt.compare(body.currentPassword, user.password);
+      if (!valid) {
+        return res.status(400).json({ error: "Current password is incorrect" });
+      }
+      updateData.password = await bcrypt.hash(body.newPassword, 10);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: { id: true, email: true, name: true, role: true, createdAt: true },
+    });
+
+    res.json(updated);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return res.status(400).json({ error: "Validation failed", details: err.issues });
+    }
+    console.error(err);
+    res.status(500).json({ error: "Failed to update profile" });
+  }
 });
 
 export default router;
