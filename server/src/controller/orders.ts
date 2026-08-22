@@ -118,8 +118,9 @@ export async function getOrders(req: Request, res: Response) {
 
 export async function getOrderById(req: Request, res: Response) {
   try {
+    const id = String(req.params.id);
     const order = await prisma.order.findUnique({
-      where: { id: req.params.id },
+      where: { id },
       include: {
         items: { include: { product: true } },
         user: { select: { id: true, email: true, name: true } },
@@ -141,9 +142,10 @@ export async function getOrderById(req: Request, res: Response) {
 
 export async function updateOrderStatus(req: Request, res: Response) {
   try {
+    const id = String(req.params.id);
     const body = updateStatusSchema.parse(req.body);
     const order = await prisma.order.update({
-      where: { id: req.params.id },
+      where: { id },
       data: { status: body.status },
     });
     res.json(order);

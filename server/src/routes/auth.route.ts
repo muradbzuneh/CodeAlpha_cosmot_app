@@ -1,6 +1,6 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { env } from "../env.js";
@@ -21,13 +21,13 @@ const loginSchema = z.object({
 
 function signAccessToken(payload: { sub: string; email: string; role: string }) {
   return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
-    expiresIn: env.ACCESS_TOKEN_TTL,
+    expiresIn: env.ACCESS_TOKEN_TTL as SignOptions["expiresIn"],
   });
 }
 
 function signRefreshToken(payload: { sub: string; email: string; role: string }) {
   return jwt.sign(payload, env.JWT_REFRESH_SECRET, {
-    expiresIn: `${env.REFRESH_TOKEN_TTL_DAYS}d`,
+    expiresIn: `${env.REFRESH_TOKEN_TTL_DAYS}d` as SignOptions["expiresIn"],
   });
 }
 
