@@ -116,8 +116,8 @@ export function ProductDetailPage() {
 
                 {/* Quantity + Add to Cart */}
                 {isAuthenticated ? (
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center border border-border rounded-full">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                    <div className="flex items-center border border-border rounded-full justify-center sm:justify-start">
                       <button
                         onClick={() => setQty((q) => Math.max(1, q - 1))}
                         className="size-10 grid place-items-center text-lg hover:bg-stone-50 transition"

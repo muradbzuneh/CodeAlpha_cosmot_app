@@ -25,16 +25,16 @@ export async function getStats(_req: Request, res: Response) {
       statusMap[s.status] = s._count.id;
     }
 
-    res.json({
+    res.send(JSON.stringify({
       totalOrders,
       totalProducts,
       totalUsers,
       totalRevenue: revenueResult._sum.total ?? 0,
       ordersByStatus: statusMap,
       recentOrders,
-    });
+    }));
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Failed to fetch stats" });
+    res.status(500).send(JSON.stringify({ error: "Failed to fetch stats" }));
   }
 }

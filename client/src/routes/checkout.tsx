@@ -50,7 +50,7 @@ export function CheckoutPage() {
             <p className="text-muted-foreground text-sm mb-8">
               Total: <span className="font-medium text-foreground">{fmt(orderResult.total)}</span>
             </p>
-            <div className="flex gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 to="/orders"
                 className="inline-flex px-7 py-3.5 bg-foreground text-background rounded-full text-xs uppercase tracking-widest"

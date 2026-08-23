@@ -70,15 +70,13 @@ router.post("/login", async (req, res) => {
 
     const user = await prisma.user.findUnique({ where: { email: body.email } });
     if (!user) {
-      res.status(401);
-      res.json({ error: "Invalid credentials" });
+      res.status(401).send(JSON.stringify({ error: "Invalid credentials" }));
       return;
     }
 
     const valid = await bcrypt.compare(body.password, user.password);
     if (!valid) {
-      res.status(401);
-      res.json({ error: "Invalid credentials" });
+      res.status(401).send(JSON.stringify({ error: "Invalid credentials" }));
       return;
     }
 
@@ -86,31 +84,34 @@ router.post("/login", async (req, res) => {
     const accessToken = signAccessToken(tokenPayload);
     const refreshToken = signRefreshToken(tokenPayload);
 
-    res.json({
+    res.send(JSON.stringify({
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
       accessToken,
       refreshToken,
-    });
+    }));
   } catch (err) {
     if (err instanceof z.ZodError) {
-      res.status(400);
-      res.json({ error: "Validation failed", details: err.issues });
+      res.status(400).send(JSON.stringify({ error: "Validation failed", details: err.issues }));
       return;
     }
     console.error("LOGIN ERROR:", err);
-    res.status(500);
-    res.json({ error: "Internal server error" });
+    res.status(500).send(JSON.stringify({ error: "Internal server error" }));
   }
 });
 
 // GET /api/auth/me
 router.get("/me", authenticate, async (req, res) => {
-  const user = await prisma.user.findUnique({
-    where: { id: req.user!.sub },
-    select: { id: true, email: true, name: true, role: true, createdAt: true },
-  });
-  if (!user) return res.status(404).json({ error: "User not found" });
-  res.json(user);
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.sub },
+      select: { id: true, email: true, name: true, role: true, createdAt: true },
+    });
+    if (!user) { res.status(404).send(JSON.stringify({ error: "User not found" })); return; }
+    res.send(JSON.stringify(user));
+  } catch (err) {
+    console.error("ME ERROR:", err);
+    res.status(500).send(JSON.stringify({ error: "Internal server error" }));
+  }
 });
 
 // PUT /api/auth/profile
@@ -127,12 +128,13 @@ router.put("/profile", authenticate, async (req, res) => {
     const userId = req.user!.sub;
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) { res.status(404).send(JSON.stringify({ error: "User not found" })); return; }
 
     if (body.email && body.email !== user.email) {
       const exists = await prisma.user.findUnique({ where: { email: body.email } });
       if (exists) {
-        return res.status(409).json({ error: "Email already in use" });
+        res.status(409).send(JSON.stringify({ error: "Email already in use" }));
+        return;
       }
     }
 
@@ -142,11 +144,13 @@ router.put("/profile", authenticate, async (req, res) => {
 
     if (body.newPassword) {
       if (!body.currentPassword) {
-        return res.status(400).json({ error: "Current password is required to set a new password" });
+        res.status(400).send(JSON.stringify({ error: "Current password is required to set a new password" }));
+        return;
       }
       const valid = await bcrypt.compare(body.currentPassword, user.password);
       if (!valid) {
-        return res.status(400).json({ error: "Current password is incorrect" });
+        res.status(400).send(JSON.stringify({ error: "Current password is incorrect" }));
+        return;
       }
       updateData.password = await bcrypt.hash(body.newPassword, 10);
     }
@@ -157,13 +161,14 @@ router.put("/profile", authenticate, async (req, res) => {
       select: { id: true, email: true, name: true, role: true, createdAt: true },
     });
 
-    res.json(updated);
+    res.send(JSON.stringify(updated));
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: "Validation failed", details: err.issues });
+      res.status(400).send(JSON.stringify({ error: "Validation failed", details: err.issues }));
+      return;
     }
-    console.error(err);
-    res.status(500).json({ error: "Failed to update profile" });
+    console.error("PROFILE ERROR:", err);
+    res.status(500).send(JSON.stringify({ error: "Failed to update profile" }));
   }
 });
 

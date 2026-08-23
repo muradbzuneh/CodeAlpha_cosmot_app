@@ -1,10 +1,10 @@
 import { Facebook, Instagram, Send, Twitter, Mail, Phone, MapPin } from "lucide-react";
 
 const socials = [
-  { label: "Facebook", icon: Facebook, href: "https://facebook.com/cosmot" },
-  { label: "Instagram", icon: Instagram, href: "https://instagram.com/cosmot" },
-  { label: "Telegram", icon: Send, href: "https://t.me/cosmot" },
-  { label: "X", icon: Twitter, href: "https://x.com/cosmot" },
+  { label: "Facebook", icon: Facebook, href: "https://facebook.com/muradbzuneh" },
+  { label: "Instagram", icon: Instagram, href: "https://instagram.com/muradina_16" },
+  { label: "Telegram", icon: Send, href: "https://t.me/murad_bz" },
+  { label: "X", icon: Twitter, href: "https://x.com/MURADBZUNEH" },
 ];
 
 export function SiteFooter() {
@@ -77,7 +77,7 @@ export function SiteFooter() {
         </div>
         <div className="pt-8 border-t border-stone-800 flex flex-col md:flex-row justify-between gap-4">
           <p className="text-[10px] text-stone-600 tracking-wider uppercase">
-            © 2026 Cosmot · Kombolcha, Ethiopia &amp; Worldwide
+            © 2026 Cosmot · Kombolcha, Ethiopia 
           </p>
           <p className="text-[10px] text-stone-600 tracking-wider uppercase">
             Privacy · Terms · Cookies

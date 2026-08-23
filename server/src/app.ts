@@ -19,7 +19,7 @@ app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "../public")));
 
 app.get("/health", (_req, res) => {
-  res.json({ status: "ok" });
+  res.send(JSON.stringify({ status: "ok" }));
 });
 
 app.use("/api/auth", authRoutes);
@@ -31,7 +31,7 @@ app.use("/api/upload", uploadRoutes);
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error("Unhandled error:", err?.message || err);
-  res.status(err?.status ?? 500).json({ error: err?.message ?? "Internal server error" });
+  res.status(err?.status ?? 500).send(JSON.stringify({ error: err?.message ?? "Internal server error" }));
 });
 
 export default app;

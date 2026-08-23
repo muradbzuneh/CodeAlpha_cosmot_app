@@ -35,7 +35,8 @@ export async function createOrder(req: Request, res: Response) {
     });
 
     if (products.length !== productIds.length) {
-      return res.status(400).json({ error: "One or more products not found" });
+      res.status(400).send(JSON.stringify({ error: "One or more products not found" }));
+      return;
     }
 
     const productMap = new Map(products.map((p) => [p.id, p]));
@@ -43,9 +44,10 @@ export async function createOrder(req: Request, res: Response) {
     for (const item of body.items) {
       const product = productMap.get(item.productId)!;
       if (product.stock < item.quantity) {
-        return res.status(400).json({
+        res.status(400).send(JSON.stringify({
           error: `Insufficient stock for "${product.name}": requested ${item.quantity}, available ${product.stock}`,
-        });
+        }));
+        return;
       }
     }
 
@@ -87,13 +89,14 @@ export async function createOrder(req: Request, res: Response) {
       return newOrder;
     });
 
-    res.status(201).json(order);
+    res.status(201).send(JSON.stringify(order));
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Validation failed", details: error.issues });
+      res.status(400).send(JSON.stringify({ error: "Validation failed", details: error.issues }));
+      return;
     }
     console.error(error);
-    res.status(500).json({ error: "Failed to create order" });
+    res.status(500).send(JSON.stringify({ error: "Failed to create order" }));
   }
 }
 
@@ -109,10 +112,10 @@ export async function getOrders(req: Request, res: Response) {
       },
       orderBy: { createdAt: "desc" },
     });
-    res.json(orders);
+    res.send(JSON.stringify(orders));
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Failed to fetch orders" });
+    res.status(500).send(JSON.stringify({ error: "Failed to fetch orders" }));
   }
 }
 
@@ -127,16 +130,17 @@ export async function getOrderById(req: Request, res: Response) {
       },
     });
 
-    if (!order) return res.status(404).json({ error: "Order not found" });
+    if (!order) { res.status(404).send(JSON.stringify({ error: "Order not found" })); return; }
 
     if (req.user!.role !== "ADMIN" && order.userId !== req.user!.sub) {
-      return res.status(403).json({ error: "Forbidden" });
+      res.status(403).send(JSON.stringify({ error: "Forbidden" }));
+      return;
     }
 
-    res.json(order);
+    res.send(JSON.stringify(order));
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Failed to fetch order" });
+    res.status(500).send(JSON.stringify({ error: "Failed to fetch order" }));
   }
 }
 
@@ -148,12 +152,13 @@ export async function updateOrderStatus(req: Request, res: Response) {
       where: { id },
       data: { status: body.status },
     });
-    res.json(order);
+    res.send(JSON.stringify(order));
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Validation failed", details: error.issues });
+      res.status(400).send(JSON.stringify({ error: "Validation failed", details: error.issues }));
+      return;
     }
     console.error(error);
-    res.status(500).json({ error: "Failed to update order" });
+    res.status(500).send(JSON.stringify({ error: "Failed to update order" }));
   }
 }

@@ -1,5 +1,5 @@
 import { Link, useLocation, Outlet, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 
 const NAV = [
@@ -12,6 +12,7 @@ export function AdminLayout() {
   const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== "ADMIN") {
@@ -19,12 +20,24 @@ export function AdminLayout() {
     }
   }, [isAuthenticated, user, navigate]);
 
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
   if (!isAuthenticated || user?.role !== "ADMIN") return null;
 
   return (
     <div className="min-h-screen bg-background flex">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-56 border-r border-border bg-stone-50 flex flex-col shrink-0">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-56 border-r border-border bg-stone-50 flex flex-col shrink-0 transition-transform duration-200 md:static md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="px-5 h-14 flex items-center border-b border-border">
           <Link to="/" className="font-display text-xl tracking-tight italic">Cosmot.</Link>
           <span className="ml-2 text-[9px] uppercase tracking-widest text-muted-foreground bg-foreground text-background px-1.5 py-0.5 rounded">Admin</span>
@@ -64,8 +77,21 @@ export function AdminLayout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-6 md:p-8 max-w-6xl">
+      <main className="flex-1 min-w-0">
+        {/* Mobile top bar */}
+        <div className="sticky top-0 z-30 flex items-center gap-3 h-14 px-4 border-b border-border bg-background/80 backdrop-blur-md md:hidden">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open menu"
+            className="p-2 -ml-2"
+          >
+            <div className="w-5 h-px bg-foreground mb-1.5" />
+            <div className="w-3 h-px bg-foreground" />
+          </button>
+          <Link to="/" className="font-display text-lg tracking-tight italic">Cosmot.</Link>
+          <span className="text-[9px] uppercase tracking-widest text-muted-foreground bg-foreground text-background px-1.5 py-0.5 rounded">Admin</span>
+        </div>
+        <div className="p-4 md:p-8 max-w-6xl">
           <Outlet />
         </div>
       </main>

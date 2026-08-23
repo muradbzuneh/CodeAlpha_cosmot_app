@@ -66,7 +66,7 @@ export function AdminDashboard() {
       {/* Orders by Status */}
       <div className="p-5 rounded-2xl border border-border bg-background">
         <h2 className="font-display text-xl italic mb-4">Orders by Status</h2>
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
           {["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"].map((s) => (
             <div key={s} className="text-center p-3 rounded-xl bg-stone-50">
               <p className={`text-lg font-medium tabular-nums ${STATUS_COLORS[s]?.split(" ")[1] ?? ""}`}>
@@ -86,7 +86,7 @@ export function AdminDashboard() {
         ) : (
           <div className="space-y-3">
             {stats.recentOrders.map((o) => (
-              <div key={o.id} className="flex items-center gap-4 p-3 rounded-xl hover:bg-stone-50 transition">
+              <div key={o.id} className="flex items-center gap-3 md:gap-4 p-3 rounded-xl hover:bg-stone-50 transition">
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate">
                     {o.customerName || o.user?.name || o.user?.email || "Unknown"}
@@ -95,10 +95,12 @@ export function AdminDashboard() {
                     #{o.id.slice(0, 8)} · {new Date(o.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-                <span className={`text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[o.status] ?? "bg-stone-100 text-stone-600"}`}>
-                  {o.status}
-                </span>
-                <span className="text-sm font-medium tabular-nums">{fmt(o.total)}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[o.status] ?? "bg-stone-100 text-stone-600"}`}>
+                    {o.status}
+                  </span>
+                  <span className="text-xs md:text-sm font-medium tabular-nums">{fmt(o.total)}</span>
+                </div>
               </div>
             ))}
           </div>

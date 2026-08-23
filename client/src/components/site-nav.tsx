@@ -146,7 +146,7 @@ export function SiteNav() {
 </Link>
                  
 
-                  <button
+    <button
                     onClick={logout}
                     className="text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
                   >

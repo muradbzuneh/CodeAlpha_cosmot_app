@@ -117,7 +117,7 @@ export function Home() {
             <p className="text-[10px] uppercase tracking-[0.25em] text-accent mb-6">
               Atelier 04 · Spring formulary
             </p>
-            <h1 className="font-display text-5xl md:text-7xl leading-[0.9] text-balance mb-6">
+            <h1 className="font-display text-4xl md:text-7xl leading-[0.9] text-balance mb-6">
               Suspended in <br />
               <span className="italic">luminous hydration.</span>
             </h1>

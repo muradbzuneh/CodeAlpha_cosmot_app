@@ -36,7 +36,7 @@ export function CartPage() {
           </header>
 
           {isEmpty ? (
-            <div className="border border-border rounded-3xl p-12 text-center max-w-xl mx-auto">
+            <div className="border border-border rounded-3xl p-8 md:p-12 text-center max-w-xl mx-auto">
               <p className="font-display text-2xl italic mb-4">Your basket is empty.</p>
               <p className="text-sm text-muted-foreground mb-8">
                 Begin the ritual — browse the latest formulations.

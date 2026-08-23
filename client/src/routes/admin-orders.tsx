@@ -54,10 +54,10 @@ export function AdminOrdersPage() {
       </div>
 
       {/* Filter pills */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar -mx-4 md:mx-0 px-4 md:px-0">
         <button
           onClick={() => setFilter("all")}
-          className={`px-4 py-1.5 rounded-full text-xs uppercase tracking-tight transition ${
+          className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs uppercase tracking-tight transition ${
             filter === "all"
               ? "bg-foreground text-background"
               : "border border-border hover:border-foreground"
@@ -71,7 +71,7 @@ export function AdminOrdersPage() {
             <button
               key={s}
               onClick={() => setFilter(s)}
-              className={`px-4 py-1.5 rounded-full text-xs uppercase tracking-tight transition ${
+              className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs uppercase tracking-tight transition ${
                 filter === s
                   ? "bg-foreground text-background"
                   : "border border-border hover:border-foreground"
@@ -83,12 +83,12 @@ export function AdminOrdersPage() {
         })}
       </div>
 
-      {/* Orders table */}
       {filtered.length === 0 ? (
         <div className="py-16 text-center text-muted-foreground text-sm">No orders match this filter.</div>
       ) : (
-        <div className="border border-border rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block border border-border rounded-2xl overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-stone-50">
@@ -132,7 +132,40 @@ export function AdminOrdersPage() {
               </tbody>
             </table>
           </div>
-        </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3">
+            {filtered.map((order) => (
+              <div key={order.id} className="border border-border rounded-2xl p-4 space-y-3 bg-background">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-medium tabular-nums">#{order.id.slice(0, 8)}</span>
+                    <p className="text-[10px] text-muted-foreground">{new Date(order.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <span className="text-sm font-medium tabular-nums">{fmt(order.total)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground truncate max-w-[60%]">
+                    {order.customerName || order.user?.name || order.email || "—"}
+                  </p>
+                  <span className="text-[10px] text-muted-foreground">{order.items.length} item(s)</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <select
+                    value={order.status}
+                    onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                    disabled={updating === order.id}
+                    className={`text-[10px] uppercase tracking-widest font-medium px-2 py-1 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-foreground cursor-pointer disabled:opacity-50 ${STATUS_COLORS[order.status] ?? "bg-stone-100 text-stone-600"}`}
+                  >
+                    {STATUSES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
