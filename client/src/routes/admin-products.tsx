@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { api, type ApiProduct } from "@/lib/api";
 import { fmt } from "@/lib/cart";
+import { useToast } from "@/components/toast";
+import { ProductCardSkeleton } from "@/components/skeleton";
 
 const EMPTY: Partial<ApiProduct> = {
   name: "",
@@ -21,6 +23,7 @@ export function AdminProductsPage() {
   const [editing, setEditing] = useState<Partial<ApiProduct> | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
 
   const fetchProducts = () => {
     api.getProducts({ limit: 100 }).then((res) => setProducts(res.products)).finally(() => setLoading(false));
@@ -36,7 +39,7 @@ export function AdminProductsPage() {
       const result = await api.uploadImage(file);
       return result.url;
     } catch {
-      alert("Image upload failed");
+      toast("Image upload failed", "error");
       return null;
     } finally {
       setUploading(false);
@@ -56,7 +59,7 @@ export function AdminProductsPage() {
       }
       setEditing(null);
     } catch (err: any) {
-      alert(err.message || "Failed to save product");
+      toast(err.message || "Failed to save product", "error");
     } finally {
       setSaving(false);
     }
@@ -68,12 +71,27 @@ export function AdminProductsPage() {
       await api.deleteProduct(id);
       setProducts((prev) => prev.filter((p) => p.id !== id));
     } catch (err: any) {
-      alert(err.message || "Failed to delete");
+      toast(err.message || "Failed to delete", "error");
     }
   };
 
   if (loading) {
-    return <div className="py-24 text-center text-muted-foreground text-sm">Loading products...</div>;
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-3xl italic">Products</h1>
+            <p className="text-sm text-muted-foreground mt-1">Loading products...</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <ProductCardSkeleton />
+          <ProductCardSkeleton />
+          <ProductCardSkeleton />
+          <ProductCardSkeleton />
+        </div>
+      </div>
+    );
   }
 
   return (

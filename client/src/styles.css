@@ -90,3 +90,72 @@
 @utility animate-fade-up {
   animation: fade-up 0.8s var(--ease-out-expo) both;
 }
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@utility animate-fade-in {
+  animation: fade-in 0.4s ease-out both;
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@utility animate-slide-in-right {
+  animation: slide-in-right 0.4s var(--ease-out-expo) both;
+}
+
+@keyframes slide-out-right {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(100%); }
+}
+
+@utility animate-slide-out-right {
+  animation: slide-out-right 0.3s ease-in both;
+}
+
+@keyframes cart-bounce {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.25); }
+  50% { transform: scale(0.95); }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@utility animate-cart-bounce {
+  animation: cart-bounce 0.5s var(--ease-out-expo);
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@utility skeleton {
+  background: linear-gradient(90deg, var(--color-border) 25%, var(--color-stone-soft) 50%, var(--color-border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 0.5rem;
+}
+
+@utility animate-scale-in {
+  animation: scale-in 0.2s var(--ease-out-expo) both;
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@utility animate-page-in {
+  animation: page-in 0.5s var(--ease-out-expo) both;
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}

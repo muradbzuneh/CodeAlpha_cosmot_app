@@ -10,6 +10,7 @@ import appCss from "../styles.css?url";
 import { CartProvider } from "@/lib/cart";
 import { AuthProvider } from "@/lib/auth";
 import { ProductProvider } from "@/lib/products-api";
+import { ToastProvider } from "@/components/toast";
 
 function NotFoundComponent() {
   return (
@@ -101,7 +102,9 @@ function RootComponent() {
       <AuthProvider>
         <ProductProvider>
           <CartProvider>
-            <Outlet />
+            <ToastProvider>
+              <Outlet />
+            </ToastProvider>
           </CartProvider>
         </ProductProvider>
       </AuthProvider>

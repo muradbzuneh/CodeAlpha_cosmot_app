@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, type ApiOrder } from "@/lib/api";
 import { fmt } from "@/lib/cart";
+import { useToast } from "@/components/toast";
 
 const STATUSES = ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"] as const;
 
@@ -17,6 +18,7 @@ export function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
+  const { toast } = useToast();
 
   const fetchOrders = () => {
     api.getOrders().then(setOrders).finally(() => setLoading(false));
@@ -34,7 +36,7 @@ export function AdminOrdersPage() {
         prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
       );
     } catch (err: any) {
-      alert(err.message || "Failed to update status");
+      toast(err.message || "Failed to update status", "error");
     } finally {
       setUpdating(null);
     }

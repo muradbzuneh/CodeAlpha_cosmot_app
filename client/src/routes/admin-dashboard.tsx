@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, type ApiOrder } from "@/lib/api";
 import { fmt } from "@/lib/cart";
+import { DashboardStatSkeleton } from "@/components/skeleton";
 
 type Stats = {
   totalOrders: number;
@@ -31,7 +32,20 @@ export function AdminDashboard() {
   }, []);
 
   if (loading) {
-    return <div className="py-24 text-center text-muted-foreground text-sm">Loading dashboard...</div>;
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="font-display text-3xl italic">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">Overview of your store performance.</p>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <DashboardStatSkeleton />
+          <DashboardStatSkeleton />
+          <DashboardStatSkeleton />
+          <DashboardStatSkeleton />
+        </div>
+      </div>
+    );
   }
 
   if (!stats) {

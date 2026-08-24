@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { useAuth } from "@/lib/auth";
+import { useToast } from "@/components/toast";
 import { api } from "@/lib/api";
 
 export function ProfilePage() {
@@ -17,6 +18,7 @@ export function ProfilePage() {
 
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -39,6 +41,7 @@ export function ProfilePage() {
       const updated = await api.updateProfile({ name, email });
       setUser(updated);
       setMsg({ type: "ok", text: "Profile updated." });
+      toast("Profile updated", "success");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -64,6 +67,7 @@ export function ProfilePage() {
     try {
       await api.updateProfile({ currentPassword, newPassword });
       setMsg({ type: "ok", text: "Password changed." });
+      toast("Password changed", "success");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -77,7 +81,7 @@ export function ProfilePage() {
   return (
     <div className="min-h-screen bg-background">
       <SiteNav />
-      <main className="px-4 md:px-8 py-12 md:py-16">
+      <main className="px-4 md:px-8 py-12 md:py-16 animate-page-in">
         <div className="mx-auto max-w-xl">
           <header className="mb-10">
             <p className="text-[10px] uppercase tracking-[0.25em] text-accent mb-3">Your account</p>

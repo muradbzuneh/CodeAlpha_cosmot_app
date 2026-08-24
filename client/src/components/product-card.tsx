@@ -2,19 +2,23 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useCart } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
+import { useToast } from "@/components/toast";
 import type { ApiProduct } from "@/lib/products-api";
 
 export function ProductCard({ product }: { product: ApiProduct }) {
   const { add } = useCart();
   const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const [added, setAdded] = useState(false);
 
   const img = product.imageUrl || "/placeholder.svg";
 
-  const handleAdd = () => {
+  const handleAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
     if (!isAuthenticated) return;
     add(product.id);
     setAdded(true);
+    toast(`${product.name} added to cart`, "success");
     setTimeout(() => setAdded(false), 1400);
   };
 

@@ -22,6 +22,16 @@ export function SiteNav() {
   const [searchLoading, setSearchLoading] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [cartBounce, setCartBounce] = useState(false);
+  const prevCount = useRef(count);
+
+  useEffect(() => {
+    if (count > prevCount.current) {
+      setCartBounce(true);
+      setTimeout(() => setCartBounce(false), 500);
+    }
+    prevCount.current = count;
+  }, [count]);
 
   useEffect(() => {
     if (searchOpen && searchInputRef.current) {
@@ -125,7 +135,7 @@ export function SiteNav() {
                 <Link
                   to="/cart"
                   aria-label="Cart"
-                  className="relative size-9 grid place-items-center rounded-full border border-foreground text-[11px] font-medium tabular-nums hover:bg-foreground hover:text-background transition-colors"
+                  className={`relative size-9 grid place-items-center rounded-full border border-foreground text-[11px] font-medium tabular-nums hover:bg-foreground hover:text-background transition-colors ${cartBounce ? "animate-cart-bounce" : ""}`}
                 >
                   {String(count).padStart(2, "0")}
                 </Link>

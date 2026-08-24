@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductCard } from "@/components/product-card";
+import { AnimateIn } from "@/components/animate-in";
 import { useProducts, type ApiProduct } from "@/lib/products-api";
 import { api, type ProductFilters } from "@/lib/api";
 import heroImg from "@/assets/hero-cream.jpg";
@@ -156,6 +157,7 @@ export function Home() {
       </header>
 
       {/* New Releases */}
+      <AnimateIn>
       <section id="new" className="px-4 md:px-8 py-16 md:py-24">
         <div className="mx-auto max-w-6xl">
           <div className="flex justify-between items-end mb-10">
@@ -177,8 +179,10 @@ export function Home() {
           </div>
         </div>
       </section>
+      </AnimateIn>
 
       {/* Categories */}
+      <AnimateIn>
       <section id="categories" className="px-4 md:px-8 py-16 md:py-24 bg-stone-50">
         <div className="mx-auto max-w-6xl">
           <div className="mb-8">
@@ -312,8 +316,10 @@ export function Home() {
           )}
         </div>
       </section>
+      </AnimateIn>
 
       {/* Ingredient Spotlight + Ritual */}
+      <AnimateIn>
       <section id="ritual" className="px-4 md:px-8 py-16 md:py-24">
         <div className="mx-auto max-w-6xl grid md:grid-cols-2 gap-10 items-center">
           <div className="bg-accent/5 rounded-[2.5rem] border border-accent/10 p-8 md:p-12 order-2 md:order-1">
@@ -352,8 +358,10 @@ export function Home() {
           </div>
         </div>
       </section>
+      </AnimateIn>
 
       {/* Editorial — Ritual journal */}
+      <AnimateIn>
       <section className="px-4 md:px-8 py-16 md:py-24 bg-foreground text-background rounded-t-[3rem]">
         <div className="mx-auto max-w-6xl grid md:grid-cols-[1fr_2fr] gap-10">
           <div>
@@ -384,8 +392,10 @@ export function Home() {
           </div>
         </div>
       </section>
+      </AnimateIn>
 
       {/* Newsletter */}
+      <AnimateIn>
       <section className="px-4 md:px-8 py-16 md:py-24 text-center">
         <div className="mx-auto max-w-xl">
           <p className="text-[10px] uppercase tracking-[0.25em] text-accent mb-3">The Letter</p>
@@ -411,6 +421,7 @@ export function Home() {
           </form>
         </div>
       </section>
+      </AnimateIn>
 
       <SiteFooter />
     </div>

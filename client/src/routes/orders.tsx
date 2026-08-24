@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { useAuth } from "@/lib/auth";
 import { api, type ApiOrder } from "@/lib/api";
 import { fmt } from "@/lib/cart";
+import { OrderCardSkeleton } from "@/components/skeleton";
 
 const STEPS = [
   { key: "PENDING",    label: "Pending",    sub: "Order placed" },
@@ -180,7 +181,7 @@ export function OrdersPage() {
   return (
     <div className="min-h-screen bg-background">
       <SiteNav />
-      <main className="px-4 md:px-8 py-12 md:py-16">
+      <main className="px-4 md:px-8 py-12 md:py-16 animate-page-in">
         <div className="mx-auto max-w-3xl">
           <header className="mb-12">
             <p className="text-[10px] uppercase tracking-[0.25em] text-accent mb-3">Your account</p>
@@ -188,7 +189,11 @@ export function OrdersPage() {
           </header>
 
           {loading && (
-            <div className="py-24 text-center text-muted-foreground text-sm">Loading orders...</div>
+            <div className="space-y-6">
+              <OrderCardSkeleton />
+              <OrderCardSkeleton />
+              <OrderCardSkeleton />
+            </div>
           )}
 
           {error && (

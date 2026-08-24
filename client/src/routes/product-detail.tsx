@@ -4,7 +4,9 @@ import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { useCart, fmt } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
+import { useToast } from "@/components/toast";
 import { api, type ApiProduct } from "@/lib/api";
+import { Skeleton } from "@/components/skeleton";
 
 export function ProductDetailPage() {
   const { productId } = useParams({ from: "/products/$productId" });
@@ -16,6 +18,7 @@ export function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     setLoading(true);
@@ -30,16 +33,30 @@ export function ProductDetailPage() {
     if (!isAuthenticated || !product) return;
     add(product.id, qty);
     setAdded(true);
+    toast(`${product.name} added to cart`, "success");
     setTimeout(() => setAdded(false), 1500);
   };
 
   return (
     <div className="min-h-screen bg-background">
       <SiteNav />
-      <main className="px-4 md:px-8 py-12 md:py-16">
+      <main className="px-4 md:px-8 py-12 md:py-16 animate-page-in">
         <div className="mx-auto max-w-5xl">
           {loading && (
-            <div className="py-24 text-center text-muted-foreground text-sm">Loading product...</div>
+            <div className="grid md:grid-cols-2 gap-10 md:gap-16">
+              <Skeleton className="w-full aspect-[4/5] rounded-[2rem]" />
+              <div className="space-y-4">
+                <Skeleton className="h-3 w-24 rounded" />
+                <Skeleton className="h-10 w-3/4 rounded" />
+                <Skeleton className="h-7 w-20 rounded" />
+                <Skeleton className="h-20 w-full rounded" />
+                <div className="grid grid-cols-2 gap-4">
+                  <Skeleton className="h-16 rounded-2xl" />
+                  <Skeleton className="h-16 rounded-2xl" />
+                </div>
+                <Skeleton className="h-12 w-full rounded-full" />
+              </div>
+            </div>
           )}
 
           {error && (

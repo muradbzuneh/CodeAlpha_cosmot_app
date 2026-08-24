@@ -25,7 +25,7 @@ export function CartPage() {
   return (
     <div className="min-h-screen bg-background">
       <SiteNav />
-      <main className="px-4 md:px-8 py-12 md:py-16">
+      <main className="px-4 md:px-8 py-12 md:py-16 animate-page-in">
         <div className="mx-auto max-w-6xl">
           <header className="mb-12">
             <p className="text-[10px] uppercase tracking-[0.25em] text-accent mb-3">Step 1 of 2</p>

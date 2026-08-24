@@ -29,7 +29,7 @@ export function LoginPage() {
   return (
     <div className="min-h-screen bg-background">
       <SiteNav />
-      <main className="px-4 md:px-8 py-16 md:py-24">
+      <main className="px-4 md:px-8 py-16 md:py-24 animate-page-in">
         <div className="mx-auto max-w-md">
           <div className="mb-10 text-center">
             <p className="text-[10px] uppercase tracking-[0.25em] text-accent mb-3">Welcome back</p>

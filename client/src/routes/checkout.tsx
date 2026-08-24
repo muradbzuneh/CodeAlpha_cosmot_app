@@ -4,6 +4,7 @@ import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { useCart, fmt } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
+import { useToast } from "@/components/toast";
 import { api } from "@/lib/api";
 
 type Payment = "telebirr" | "bank" | "card" | "cod";
@@ -16,6 +17,7 @@ export function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderResult, setOrderResult] = useState<{ id: string; total: number } | null>(null);
+  const { toast } = useToast();
 
   const [customerName, setCustomerName] = useState("");
   const [email, setEmail] = useState("");
@@ -113,6 +115,7 @@ export function CheckoutPage() {
       });
       clear();
       setOrderResult({ id: order.id, total: order.total });
+      toast("Order placed successfully!", "success");
     } catch (err: any) {
       setError(err.message || "Failed to place order");
     } finally {
@@ -123,7 +126,7 @@ export function CheckoutPage() {
   return (
     <div className="min-h-screen bg-background">
       <SiteNav />
-      <main className="px-4 md:px-8 py-12 md:py-16">
+      <main className="px-4 md:px-8 py-12 md:py-16 animate-page-in">
         <div className="mx-auto max-w-6xl">
           <header className="mb-12">
             <p className="text-[10px] uppercase tracking-[0.25em] text-accent mb-3">Step 2 of 2</p>
