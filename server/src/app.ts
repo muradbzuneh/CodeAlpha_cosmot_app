@@ -7,6 +7,7 @@ import productRoutes from "./routes/product.route.js";
 import orderRoutes from "./routes/order.route.js";
 import statsRoutes from "./routes/stats.route.js";
 import uploadRoutes from "./routes/upload.route.js";
+import { sendJson } from "./lib/response.js";
 
 const app = express();
 
@@ -27,7 +28,7 @@ const publicDir = path.join(process.cwd(), "public");
 app.use("/uploads", express.static(publicDir));
 
 app.get("/health", (_req, res) => {
-  res.send(JSON.stringify({ status: "ok" }));
+  sendJson(res, 200, { status: "ok" });
 });
 
 app.use("/api/auth", authRoutes);
@@ -39,7 +40,7 @@ app.use("/api/upload", uploadRoutes);
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error("Unhandled error:", err?.message || err);
-  res.status(err?.status ?? 500).send(JSON.stringify({ error: err?.message ?? "Internal server error" }));
+  sendJson(res, err?.status ?? 500, { error: err?.message ?? "Internal server error" });
 });
 
 export default app;

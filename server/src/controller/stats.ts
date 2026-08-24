@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
+import { sendJson } from "../lib/response.js";
 
 export async function getStats(_req: Request, res: Response) {
   try {
@@ -25,16 +26,16 @@ export async function getStats(_req: Request, res: Response) {
       statusMap[s.status] = s._count.id;
     }
 
-    res.send(JSON.stringify({
+    sendJson(res, 200, {
       totalOrders,
       totalProducts,
       totalUsers,
       totalRevenue: revenueResult._sum.total ?? 0,
       ordersByStatus: statusMap,
       recentOrders,
-    }));
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).send(JSON.stringify({ error: "Failed to fetch stats" }));
+    sendJson(res, 500, { error: "Failed to fetch stats" });
   }
 }

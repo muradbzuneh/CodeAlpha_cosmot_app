@@ -1,13 +1,14 @@
 import { Request, Response } from "express";
 import fs from "fs";
 import path from "path";
+import { sendJson } from "../lib/response.js";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "products");
 
 export async function uploadImage(req: Request, res: Response) {
   try {
     if (!req.file) {
-      res.status(400).send(JSON.stringify({ error: "No file uploaded" }));
+      sendJson(res, 400, { error: "No file uploaded" });
       return;
     }
 
@@ -18,9 +19,9 @@ export async function uploadImage(req: Request, res: Response) {
     const filename = req.file.filename;
     const url = `/uploads/products/${filename}`;
 
-    res.status(201).send(JSON.stringify({ url, filename }));
+    sendJson(res, 201, { url, filename });
   } catch (error) {
     console.error(error);
-    res.status(500).send(JSON.stringify({ error: "Failed to upload file" }));
+    sendJson(res, 500, { error: "Failed to upload file" });
   }
 }

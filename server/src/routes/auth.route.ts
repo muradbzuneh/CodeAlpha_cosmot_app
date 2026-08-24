@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { env } from "../env.js";
 import { authenticate } from "../middleware/auth.js";
+import { sendJson } from "../lib/response.js";
 
 const router = Router();
 
@@ -38,7 +39,7 @@ router.post("/register", async (req, res) => {
 
     const exists = await prisma.user.findUnique({ where: { email: body.email } });
     if (exists) {
-      res.status(409).send(JSON.stringify({ error: "Email already registered" }));
+      sendJson(res, 409, { error: "Email already registered" });
       return;
     }
 
@@ -52,14 +53,14 @@ router.post("/register", async (req, res) => {
     const accessToken = signAccessToken(tokenPayload);
     const refreshToken = signRefreshToken(tokenPayload);
 
-    res.status(201).send(JSON.stringify({ user, accessToken, refreshToken }));
+    sendJson(res, 201, { user, accessToken, refreshToken });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      res.status(400).send(JSON.stringify({ error: "Validation failed", details: err.issues }));
+      sendJson(res, 400, { error: "Validation failed", details: err.issues });
       return;
     }
     console.error("REGISTER ERROR:", err);
-    res.status(500).send(JSON.stringify({ error: "Internal server error" }));
+    sendJson(res, 500, { error: "Internal server error" });
   }
 });
 
@@ -70,13 +71,13 @@ router.post("/login", async (req, res) => {
 
     const user = await prisma.user.findUnique({ where: { email: body.email } });
     if (!user) {
-      res.status(401).send(JSON.stringify({ error: "Invalid credentials" }));
+      sendJson(res, 401, { error: "Invalid credentials" });
       return;
     }
 
     const valid = await bcrypt.compare(body.password, user.password);
     if (!valid) {
-      res.status(401).send(JSON.stringify({ error: "Invalid credentials" }));
+      sendJson(res, 401, { error: "Invalid credentials" });
       return;
     }
 
@@ -84,18 +85,18 @@ router.post("/login", async (req, res) => {
     const accessToken = signAccessToken(tokenPayload);
     const refreshToken = signRefreshToken(tokenPayload);
 
-    res.send(JSON.stringify({
+    sendJson(res, 200, {
       user: { id: user.id, email: user.email, name: user.name, role: user.role },
       accessToken,
       refreshToken,
-    }));
+    });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      res.status(400).send(JSON.stringify({ error: "Validation failed", details: err.issues }));
+      sendJson(res, 400, { error: "Validation failed", details: err.issues });
       return;
     }
     console.error("LOGIN ERROR:", err);
-    res.status(500).send(JSON.stringify({ error: "Internal server error" }));
+    sendJson(res, 500, { error: "Internal server error" });
   }
 });
 
@@ -106,11 +107,14 @@ router.get("/me", authenticate, async (req, res) => {
       where: { id: req.user!.sub },
       select: { id: true, email: true, name: true, role: true, createdAt: true },
     });
-    if (!user) { res.status(404).send(JSON.stringify({ error: "User not found" })); return; }
-    res.send(JSON.stringify(user));
+    if (!user) {
+      sendJson(res, 404, { error: "User not found" });
+      return;
+    }
+    sendJson(res, 200, user);
   } catch (err) {
     console.error("ME ERROR:", err);
-    res.status(500).send(JSON.stringify({ error: "Internal server error" }));
+    sendJson(res, 500, { error: "Internal server error" });
   }
 });
 
@@ -128,12 +132,15 @@ router.put("/profile", authenticate, async (req, res) => {
     const userId = req.user!.sub;
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) { res.status(404).send(JSON.stringify({ error: "User not found" })); return; }
+    if (!user) {
+      sendJson(res, 404, { error: "User not found" });
+      return;
+    }
 
     if (body.email && body.email !== user.email) {
       const exists = await prisma.user.findUnique({ where: { email: body.email } });
       if (exists) {
-        res.status(409).send(JSON.stringify({ error: "Email already in use" }));
+        sendJson(res, 409, { error: "Email already in use" });
         return;
       }
     }
@@ -144,12 +151,12 @@ router.put("/profile", authenticate, async (req, res) => {
 
     if (body.newPassword) {
       if (!body.currentPassword) {
-        res.status(400).send(JSON.stringify({ error: "Current password is required to set a new password" }));
+        sendJson(res, 400, { error: "Current password is required to set a new password" });
         return;
       }
       const valid = await bcrypt.compare(body.currentPassword, user.password);
       if (!valid) {
-        res.status(400).send(JSON.stringify({ error: "Current password is incorrect" }));
+        sendJson(res, 400, { error: "Current password is incorrect" });
         return;
       }
       updateData.password = await bcrypt.hash(body.newPassword, 10);
@@ -161,14 +168,14 @@ router.put("/profile", authenticate, async (req, res) => {
       select: { id: true, email: true, name: true, role: true, createdAt: true },
     });
 
-    res.send(JSON.stringify(updated));
+    sendJson(res, 200, updated);
   } catch (err) {
     if (err instanceof z.ZodError) {
-      res.status(400).send(JSON.stringify({ error: "Validation failed", details: err.issues }));
+      sendJson(res, 400, { error: "Validation failed", details: err.issues });
       return;
     }
     console.error("PROFILE ERROR:", err);
-    res.status(500).send(JSON.stringify({ error: "Failed to update profile" }));
+    sendJson(res, 500, { error: "Failed to update profile" });
   }
 });
 

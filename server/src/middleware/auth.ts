@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../env.js";
+import { sendJson } from "../lib/response.js";
 
 export interface JwtPayload {
   sub: string;
@@ -19,7 +20,7 @@ declare global {
 export function authenticate(req: Request, res: Response, next: NextFunction) {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) {
-    res.status(401).send(JSON.stringify({ error: "Missing or invalid token" }));
+    sendJson(res, 401, { error: "Missing or invalid token" });
     return;
   }
 
@@ -29,14 +30,14 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
     req.user = payload;
     next();
   } catch {
-    res.status(401).send(JSON.stringify({ error: "Invalid or expired token" }));
+    sendJson(res, 401, { error: "Invalid or expired token" });
   }
 }
 
 export function requireRole(...roles: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user || !roles.includes(req.user.role)) {
-      res.status(403).send(JSON.stringify({ error: "Forbidden" }));
+      sendJson(res, 403, { error: "Forbidden" });
       return;
     }
     next();

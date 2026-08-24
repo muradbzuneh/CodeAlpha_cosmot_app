@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
+import { sendJson } from "../lib/response.js";
+
 const productSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
@@ -65,15 +67,15 @@ export async function getProducts(req: Request, res: Response) {
       prisma.product.count({ where }),
     ]);
 
-    res.send(JSON.stringify({
+    sendJson(res, 200, {
       products,
       total,
       page,
       totalPages: Math.ceil(total / limit),
-    }));
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).send(JSON.stringify({ error: "Failed to fetch products" }));
+    sendJson(res, 500, { error: "Failed to fetch products" });
   }
 }
 
@@ -84,13 +86,13 @@ export async function getProductById(req: Request, res: Response) {
       where: { id },
     });
     if (!product) {
-      res.status(404).send(JSON.stringify({ error: "Product not found" }));
+      sendJson(res, 404, { error: "Product not found" });
       return;
     }
-    res.send(JSON.stringify(product));
+    sendJson(res, 200, product);
   } catch (error) {
     console.error(error);
-    res.status(500).send(JSON.stringify({ error: "Failed to fetch product" }));
+    sendJson(res, 500, { error: "Failed to fetch product" });
   }
 }
 
@@ -98,14 +100,14 @@ export async function createProduct(req: Request, res: Response) {
   try {
     const validatedData = productSchema.parse(req.body);
     const product = await prisma.product.create({ data: validatedData });
-    res.status(201).send(JSON.stringify(product));
+    sendJson(res, 201, product);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).send(JSON.stringify({ error: "Invalid product data", details: error.issues }));
+      sendJson(res, 400, { error: "Invalid product data", details: error.issues });
       return;
     }
     console.error(error);
-    res.status(500).send(JSON.stringify({ error: "Failed to create product" }));
+    sendJson(res, 500, { error: "Failed to create product" });
   }
 }
 
@@ -117,14 +119,14 @@ export async function updateProduct(req: Request, res: Response) {
       where: { id },
       data: body,
     });
-    res.send(JSON.stringify(product));
+    sendJson(res, 200, product);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).send(JSON.stringify({ error: "Validation failed", details: error.issues }));
+      sendJson(res, 400, { error: "Validation failed", details: error.issues });
       return;
     }
     console.error(error);
-    res.status(500).send(JSON.stringify({ error: "Failed to update product" }));
+    sendJson(res, 500, { error: "Failed to update product" });
   }
 }
 
@@ -135,6 +137,6 @@ export async function deleteProduct(req: Request, res: Response) {
     res.status(204).end();
   } catch (error) {
     console.error(error);
-    res.status(404).send(JSON.stringify({ error: "Product not found" }));
+    sendJson(res, 404, { error: "Product not found" });
   }
 }

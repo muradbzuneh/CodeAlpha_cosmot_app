@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
+import { sendJson } from "../lib/response.js";
 
 const createOrderSchema = z.object({
   address: z.string().min(1),
@@ -35,7 +36,7 @@ export async function createOrder(req: Request, res: Response) {
     });
 
     if (products.length !== productIds.length) {
-      res.status(400).send(JSON.stringify({ error: "One or more products not found" }));
+      sendJson(res, 400, { error: "One or more products not found" });
       return;
     }
 
@@ -44,9 +45,9 @@ export async function createOrder(req: Request, res: Response) {
     for (const item of body.items) {
       const product = productMap.get(item.productId)!;
       if (product.stock < item.quantity) {
-        res.status(400).send(JSON.stringify({
+        sendJson(res, 400, {
           error: `Insufficient stock for "${product.name}": requested ${item.quantity}, available ${product.stock}`,
-        }));
+        });
         return;
       }
     }
@@ -89,14 +90,14 @@ export async function createOrder(req: Request, res: Response) {
       return newOrder;
     });
 
-    res.status(201).send(JSON.stringify(order));
+    sendJson(res, 201, order);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).send(JSON.stringify({ error: "Validation failed", details: error.issues }));
+      sendJson(res, 400, { error: "Validation failed", details: error.issues });
       return;
     }
     console.error(error);
-    res.status(500).send(JSON.stringify({ error: "Failed to create order" }));
+    sendJson(res, 500, { error: "Failed to create order" });
   }
 }
 
@@ -112,10 +113,10 @@ export async function getOrders(req: Request, res: Response) {
       },
       orderBy: { createdAt: "desc" },
     });
-    res.send(JSON.stringify(orders));
+    sendJson(res, 200, orders);
   } catch (error) {
     console.error(error);
-    res.status(500).send(JSON.stringify({ error: "Failed to fetch orders" }));
+    sendJson(res, 500, { error: "Failed to fetch orders" });
   }
 }
 
@@ -130,17 +131,20 @@ export async function getOrderById(req: Request, res: Response) {
       },
     });
 
-    if (!order) { res.status(404).send(JSON.stringify({ error: "Order not found" })); return; }
-
-    if (req.user!.role !== "ADMIN" && order.userId !== req.user!.sub) {
-      res.status(403).send(JSON.stringify({ error: "Forbidden" }));
+    if (!order) {
+      sendJson(res, 404, { error: "Order not found" });
       return;
     }
 
-    res.send(JSON.stringify(order));
+    if (req.user!.role !== "ADMIN" && order.userId !== req.user!.sub) {
+      sendJson(res, 403, { error: "Forbidden" });
+      return;
+    }
+
+    sendJson(res, 200, order);
   } catch (error) {
     console.error(error);
-    res.status(500).send(JSON.stringify({ error: "Failed to fetch order" }));
+    sendJson(res, 500, { error: "Failed to fetch order" });
   }
 }
 
@@ -152,13 +156,13 @@ export async function updateOrderStatus(req: Request, res: Response) {
       where: { id },
       data: { status: body.status },
     });
-    res.send(JSON.stringify(order));
+    sendJson(res, 200, order);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).send(JSON.stringify({ error: "Validation failed", details: error.issues }));
+      sendJson(res, 400, { error: "Validation failed", details: error.issues });
       return;
     }
     console.error(error);
-    res.status(500).send(JSON.stringify({ error: "Failed to update order" }));
+    sendJson(res, 500, { error: "Failed to update order" });
   }
 }
