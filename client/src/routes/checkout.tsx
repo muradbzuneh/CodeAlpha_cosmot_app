@@ -235,7 +235,7 @@ export function CheckoutPage() {
                   {lines.map((l) => (
                     <div key={l.product.id} className="flex gap-3">
                       <div className="relative size-14 rounded-lg overflow-hidden bg-stone-100 shrink-0">
-                        <img src={l.product.imageUrl || "/placeholder.jpg"} alt="" className="w-full h-full object-cover" />
+                        <img src={l.product.imageUrl || "/placeholder.svg"} alt="" className="w-full h-full object-cover" />
                         <span className="absolute -top-1 -right-1 size-5 rounded-full bg-foreground text-background text-[10px] grid place-items-center">
                           {l.qty}
                         </span>

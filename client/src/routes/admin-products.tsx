@@ -182,7 +182,7 @@ export function AdminProductsPage() {
         {products.map((p) => (
           <div key={p.id} className="border border-border rounded-2xl overflow-hidden bg-background group">
             <div className="relative aspect-[4/5] bg-stone-100 overflow-hidden">
-              <img src={p.imageUrl || "/placeholder.jpg"} alt={p.name} className="w-full h-full object-cover" />
+              <img src={p.imageUrl || "/placeholder.svg"} alt={p.name} className="w-full h-full object-cover" />
               {p.isNew && (
                 <span className="absolute top-2 left-2 bg-background/90 backdrop-blur px-2 py-0.5 rounded-full text-[9px] uppercase tracking-widest">
                   New

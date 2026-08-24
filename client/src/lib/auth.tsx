@@ -37,8 +37,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const savedUser = localStorage.getItem("cosmot-user");
 
     if (savedToken && savedUser) {
-      setToken(savedToken);
-      setUser(JSON.parse(savedUser));
+      try {
+        setToken(savedToken);
+        setUser(JSON.parse(savedUser));
+      } catch {
+        localStorage.removeItem("cosmot-token");
+        localStorage.removeItem("cosmot-user");
+      }
     }
     setLoading(false);
   }, []);

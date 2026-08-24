@@ -58,7 +58,7 @@ export function ProductDetailPage() {
               {/* Image */}
               <div className="relative w-full aspect-[4/5] bg-stone-100 rounded-[2rem] overflow-hidden">
                 <img
-                  src={product.imageUrl || "/placeholder.jpg"}
+                  src={product.imageUrl || "/placeholder.svg"}
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />

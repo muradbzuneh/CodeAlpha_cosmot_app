@@ -9,7 +9,7 @@ export function ProductCard({ product }: { product: ApiProduct }) {
   const { isAuthenticated } = useAuth();
   const [added, setAdded] = useState(false);
 
-  const img = product.imageUrl || "/placeholder.jpg";
+  const img = product.imageUrl || "/placeholder.svg";
 
   const handleAdd = () => {
     if (!isAuthenticated) return;

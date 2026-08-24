@@ -289,7 +289,7 @@ export function OrdersPage() {
                               <div key={item.id} className="flex gap-3">
                                 <div className="relative size-14 rounded-lg overflow-hidden bg-stone-100 shrink-0">
                                   <img
-                                    src={item.product?.imageUrl || "/placeholder.jpg"}
+                                    src={item.product?.imageUrl || "/placeholder.svg"}
                                     alt=""
                                     className="w-full h-full object-cover"
                                   />

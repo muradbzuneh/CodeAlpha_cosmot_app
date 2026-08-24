@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
-import { fileURLToPath } from "url";
 import { env } from "./env.js";
 import authRoutes from "./routes/auth.route.js";
 import productRoutes from "./routes/product.route.js";
@@ -9,14 +8,23 @@ import orderRoutes from "./routes/order.route.js";
 import statsRoutes from "./routes/stats.route.js";
 import uploadRoutes from "./routes/upload.route.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 const app = express();
 
-app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+const allowedOrigins = env.CORS_ORIGIN.split(",").map((s) => s.trim());
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
-app.use("/uploads", express.static(path.join(__dirname, "../public")));
+const publicDir = path.join(process.cwd(), "public");
+app.use("/uploads", express.static(publicDir));
 
 app.get("/health", (_req, res) => {
   res.send(JSON.stringify({ status: "ok" }));

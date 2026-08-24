@@ -58,7 +58,7 @@ export function CartPage() {
                   >
                     <div className="aspect-square rounded-xl overflow-hidden bg-stone-100">
                       <img
-                        src={l.product.imageUrl || "/placeholder.jpg"}
+                        src={l.product.imageUrl || "/placeholder.svg"}
                         alt={l.product.name}
                         loading="lazy"
                         width={200}

@@ -1,14 +1,19 @@
 import { Router } from "express";
 import multer from "multer";
 import path from "path";
-import { fileURLToPath } from "url";
+import fs from "fs";
 import { authenticate, requireRole } from "../middleware/auth.js";
 import { uploadImage } from "../controller/upload.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const UPLOAD_DIR = path.join(process.cwd(), "public", "products");
 
 const storage = multer.diskStorage({
-  destination: path.join(__dirname, "../../public/products"),
+  destination: (_req, _file, cb) => {
+    if (!fs.existsSync(UPLOAD_DIR)) {
+      fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+    }
+    cb(null, UPLOAD_DIR);
+  },
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname);
     const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;

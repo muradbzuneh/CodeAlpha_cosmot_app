@@ -96,7 +96,8 @@ export function SiteNav() {
             to="/"
             className="font-display text-2xl tracking-tight italic select-none text-center justify-self-center flex items-center gap-2"
           >
-            <img src="/cosmot-logo-1.png" alt="Cosmot" className="h-10 w-16 object-contain rounded-2xl" />
+            <img src="/cosmot-logo-1.png" alt="Cosmot" className="size-10 grid place-items-center rounded-full 
+              border border-stone-700 hover:text-stone-900 transition-colors" />
             Cosmot.
           </Link>
 
@@ -268,7 +269,7 @@ export function SiteNav() {
                   >
                     <div className="relative w-full aspect-[4/5] bg-stone-100 rounded-2xl overflow-hidden mb-3">
                       <img
-                        src={p.imageUrl || "/placeholder.jpg"}
+                        src={p.imageUrl || "/placeholder.svg"}
                         alt={p.name}
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
