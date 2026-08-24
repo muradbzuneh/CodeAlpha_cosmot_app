@@ -5,12 +5,14 @@ import {
   createRootRouteWithContext,
   useRouter,
 } from "@tanstack/react-router";
+import { useState, useCallback } from "react";
 
 import appCss from "../styles.css?url";
 import { CartProvider } from "@/lib/cart";
 import { AuthProvider } from "@/lib/auth";
 import { ProductProvider } from "@/lib/products-api";
 import { ToastProvider } from "@/components/toast";
+import { Preloader } from "@/components/preloader";
 
 function NotFoundComponent() {
   return (
@@ -96,18 +98,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [loaded, setLoaded] = useState(false);
+  const handleComplete = useCallback(() => setLoaded(true), []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ProductProvider>
-          <CartProvider>
-            <ToastProvider>
-              <Outlet />
-            </ToastProvider>
-          </CartProvider>
-        </ProductProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <>
+      {!loaded && <Preloader onComplete={handleComplete} />}
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ProductProvider>
+            <CartProvider>
+              <ToastProvider>
+                <Outlet />
+              </ToastProvider>
+            </CartProvider>
+          </ProductProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </>
   );
 }
