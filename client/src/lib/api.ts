@@ -189,6 +189,7 @@ export type ApiOrder = {
   paymentMethod: string | null;
   shipping: string;
   createdAt: string;
+  user?: { id: string; email: string; name: string | null } | null;
   items: Array<{
     id: string;
     productId: string;

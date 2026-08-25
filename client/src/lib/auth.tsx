@@ -12,6 +12,7 @@ type User = {
   email: string;
   name: string | null;
   role: string;
+  createdAt?: string;
 };
 
 type AuthCtx = {

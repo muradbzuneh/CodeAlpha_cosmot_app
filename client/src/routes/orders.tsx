@@ -81,7 +81,6 @@ function TrackingBar({ status, compact }: { status: string; compact?: boolean })
         <div className="relative flex justify-between">
           {STEPS.map((step, i) => {
             const reached = isCancelled ? i <= 0 : i <= active;
-            const current = !isCancelled && i === active;
             return (
               <div key={step.key} className="flex flex-col items-center w-0 flex-1">
                 {/* Dot */}

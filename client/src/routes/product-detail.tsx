@@ -1,4 +1,4 @@
-import { Link, useParams, useNavigate } from "@tanstack/react-router";
+import { Link, useParams } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
@@ -10,7 +10,6 @@ import { Skeleton } from "@/components/skeleton";
 
 export function ProductDetailPage() {
   const { productId } = useParams({ from: "/products/$productId" });
-  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { add } = useCart();
   const [product, setProduct] = useState<ApiProduct | null>(null);
