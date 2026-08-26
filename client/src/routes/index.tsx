@@ -52,6 +52,22 @@ export function Home() {
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [heroProducts, setHeroProducts] = useState<ApiProduct[]>([]);
+  const [heroIndex, setHeroIndex] = useState(0);
+  const [heroHovered, setHeroHovered] = useState(false);
+
+  useEffect(() => {
+    api.getProducts({ limit: 8 }).then((res) => setHeroProducts(res.products)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const slides = heroProducts.length > 0 ? heroProducts.slice(0, 8) : allProducts.slice(0, 8);
+    if (slides.length === 0 || heroHovered) return;
+    const id = setInterval(() => {
+      setHeroIndex((i) => (i + 1) % slides.length);
+    }, 3500);
+    return () => clearInterval(id);
+  }, [heroProducts, allProducts, heroHovered]);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -101,18 +117,54 @@ export function Home() {
       <header className="px-4 md:px-8 pt-8 md:pt-16 pb-12 animate-fade-up">
         <div className="mx-auto max-w-6xl grid md:grid-cols-2 gap-10 md:gap-16 items-center">
           <div className="md:order-2">
-            <div className="relative w-full aspect-[4/5] bg-stone-100 rounded-[2rem] overflow-hidden">
-              <img
-                src={heroImg}
-                alt="Cosmot Dew Concentrate — frosted glass jar of luxury face cream"
-                width={1024}
-                height={1280}
-                className="w-full h-full object-cover"
-              />
-              <span className="absolute bottom-4 left-4 bg-background/90 backdrop-blur px-3 py-1.5 rounded-full text-[10px] uppercase tracking-widest">
-                The Dew Concentrate · New
-              </span>
-            </div>
+            {(() => {
+              const slides = heroProducts.length > 0 ? heroProducts.slice(0, 8) : allProducts.slice(0, 8);
+              const safeIndex = heroIndex % Math.max(slides.length, 1);
+              const current = slides[safeIndex];
+              return (
+                <div
+                  className="relative w-full aspect-[4/5] rounded-[2rem] overflow-hidden group"
+                  onMouseEnter={() => setHeroHovered(true)}
+                  onMouseLeave={() => setHeroHovered(false)}
+                >
+                  {slides.map((p, i) => (
+                    <div
+                      key={p.id}
+                      className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${i === safeIndex ? "opacity-100 z-10" : "opacity-0 z-0"}`}
+                    >
+                      <img
+                        src={p.imageUrl || heroImg}
+                        alt={p.name}
+                        className="w-full h-full object-cover"
+                        loading={i < 2 ? "eager" : "lazy"}
+                      />
+                    </div>
+                  ))}
+                  {current && (
+                    <div className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-5 pt-16 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <p className="text-[10px] uppercase tracking-widest text-white/70 mb-1">
+                        {current.category || "Cosmot"}
+                      </p>
+                      <p className="text-sm font-medium text-white leading-snug">{current.name}</p>
+                      {current.description && (
+                        <p className="text-[11px] text-white/70 mt-1 line-clamp-2">{current.description}</p>
+                      )}
+                    </div>
+                  )}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                    {slides.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setHeroIndex(i)}
+                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                          i === safeIndex ? "bg-white w-5" : "bg-white/40 hover:bg-white/60"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
           <div className="md:order-1">
             <p className="text-[10px] uppercase tracking-[0.25em] text-accent mb-6">
