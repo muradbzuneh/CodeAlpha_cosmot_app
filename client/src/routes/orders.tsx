@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { useAuth } from "@/lib/auth";
-import { api, type ApiOrder } from "@/lib/api";
+import { api, type ApiOrder, resolveImageUrl } from "@/lib/api";
 import { fmt } from "@/lib/cart";
 import { OrderCardSkeleton } from "@/components/skeleton";
 
@@ -293,7 +293,7 @@ export function OrdersPage() {
                               <div key={item.id} className="flex gap-3">
                                 <div className="relative size-14 rounded-lg overflow-hidden bg-stone-100 shrink-0">
                                   <img
-                                    src={item.product?.imageUrl || "/placeholder.svg"}
+                                    src={resolveImageUrl(item.product?.imageUrl)}
                                     alt=""
                                     className="w-full h-full object-cover"
                                   />

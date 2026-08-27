@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { useCart } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
-import { api, type ApiProduct } from "@/lib/api";
+import { api, type ApiProduct, resolveImageUrl } from "@/lib/api";
 import { fmt } from "@/lib/cart";
 
 const links = [
@@ -279,7 +279,7 @@ export function SiteNav() {
                   >
                     <div className="relative w-full aspect-[4/5] bg-stone-100 rounded-2xl overflow-hidden mb-3">
                       <img
-                        src={p.imageUrl || "/placeholder.svg"}
+                        src={resolveImageUrl(p.imageUrl)}
                         alt={p.name}
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"

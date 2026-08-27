@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, type ApiProduct } from "@/lib/api";
+import { api, type ApiProduct, resolveImageUrl } from "@/lib/api";
 import { fmt } from "@/lib/cart";
 import { useToast } from "@/components/toast";
 import { ProductCardSkeleton } from "@/components/skeleton";
@@ -154,7 +154,7 @@ export function AdminProductsPage() {
               <div>
                 <span className="text-[10px] uppercase tracking-widest text-muted-foreground block mb-1">Image</span>
                 {editing.imageUrl && (
-                  <img src={editing.imageUrl} alt="" className="w-24 h-30 object-cover rounded-xl mb-2" />
+                  <img src={resolveImageUrl(editing.imageUrl)} alt="" className="w-24 h-30 object-cover rounded-xl mb-2" />
                 )}
                 <label className="block">
                   <span className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition">
@@ -200,7 +200,7 @@ export function AdminProductsPage() {
         {products.map((p) => (
           <div key={p.id} className="border border-border rounded-2xl overflow-hidden bg-background group">
             <div className="relative aspect-[4/5] bg-stone-100 overflow-hidden">
-              <img src={p.imageUrl || "/placeholder.svg"} alt={p.name} className="w-full h-full object-cover" />
+              <img src={resolveImageUrl(p.imageUrl)} alt={p.name} className="w-full h-full object-cover" />
               {p.isNew && (
                 <span className="absolute top-2 left-2 bg-background/90 backdrop-blur px-2 py-0.5 rounded-full text-[9px] uppercase tracking-widest">
                   New

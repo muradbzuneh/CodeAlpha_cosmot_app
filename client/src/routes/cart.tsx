@@ -4,6 +4,7 @@ import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { useCart, fmt } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
+import { resolveImageUrl } from "@/lib/api";
 
 export function CartPage() {
   const { isAuthenticated } = useAuth();
@@ -58,7 +59,7 @@ export function CartPage() {
                   >
                     <div className="aspect-square rounded-xl overflow-hidden bg-stone-100">
                       <img
-                        src={l.product.imageUrl || "/placeholder.svg"}
+                        src={resolveImageUrl(l.product.imageUrl)}
                         alt={l.product.name}
                         loading="lazy"
                         width={200}

@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { useCart, fmt } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/components/toast";
-import { api, type ApiProduct } from "@/lib/api";
+import { api, type ApiProduct, resolveImageUrl } from "@/lib/api";
 import { Skeleton } from "@/components/skeleton";
 
 export function ProductDetailPage() {
@@ -74,7 +74,7 @@ export function ProductDetailPage() {
               {/* Image */}
               <div className="relative w-full aspect-[4/5] bg-stone-100 rounded-[2rem] overflow-hidden">
                 <img
-                  src={product.imageUrl || "/placeholder.svg"}
+                  src={resolveImageUrl(product.imageUrl)}
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />

@@ -4,7 +4,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { ProductCard } from "@/components/product-card";
 import { AnimateIn } from "@/components/animate-in";
 import { useProducts, type ApiProduct } from "@/lib/products-api";
-import { api, type ProductFilters } from "@/lib/api";
+import { api, type ProductFilters, resolveImageUrl } from "@/lib/api";
 import heroImg from "@/assets/hero-cream.jpg";
 import ingredientImg from "@/assets/ingredient-oil.jpg";
 import journalMorning from "@/assets/journal-morning.jpg";
@@ -133,7 +133,7 @@ export function Home() {
                       className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${i === safeIndex ? "opacity-100 z-10" : "opacity-0 z-0"}`}
                     >
                       <img
-                        src={p.imageUrl || heroImg}
+                        src={resolveImageUrl(p.imageUrl)}
                         alt={p.name}
                         className="w-full h-full object-cover"
                         loading={i < 2 ? "eager" : "lazy"}

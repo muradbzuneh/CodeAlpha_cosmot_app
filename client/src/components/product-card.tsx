@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useCart } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/components/toast";
+import { resolveImageUrl } from "@/lib/api";
 import type { ApiProduct } from "@/lib/products-api";
 
 export function ProductCard({ product }: { product: ApiProduct }) {
@@ -11,7 +12,7 @@ export function ProductCard({ product }: { product: ApiProduct }) {
   const { toast } = useToast();
   const [added, setAdded] = useState(false);
 
-  const img = product.imageUrl || "/placeholder.svg";
+  const img = resolveImageUrl(product.imageUrl);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
