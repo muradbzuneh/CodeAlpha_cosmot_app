@@ -64,6 +64,7 @@ export function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••"
                 className="mt-1 w-full px-4 py-3.5 rounded-xl bg-stone-50 border border-border text-sm focus:outline-none focus:border-foreground transition"
+                
               />
             </label>
 

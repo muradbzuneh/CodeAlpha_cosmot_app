@@ -5,7 +5,6 @@ import { ProductCard } from "@/components/product-card";
 import { AnimateIn } from "@/components/animate-in";
 import { useProducts, type ApiProduct } from "@/lib/products-api";
 import { api, type ProductFilters, resolveImageUrl } from "@/lib/api";
-import heroImg from "@/assets/hero-cream.jpg";
 import ingredientImg from "@/assets/ingredient-oil.jpg";
 import journalMorning from "@/assets/journal-morning.jpg";
 import journalOil from "@/assets/journal-oil.jpg";
