@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -36,7 +37,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const productMap = new Map(products.map((p) => [p.id, p]));
+  const productMap = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
 
   return (
     <Ctx.Provider value={{ products, productMap, loading, error }}>

@@ -12,8 +12,9 @@ type Payment = "telebirr" | "bank" | "card" | "cod";
 export function CheckoutPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const { lines, subtotal, discount, vat, total, promo, clear } = useCart();
+  const { lines, subtotal, discount, vat, total, promo, clear, clearPromo } = useCart();
   const [payment, setPayment] = useState<Payment>("telebirr");
+  const [shippingType, setShippingType] = useState<"standard" | "express">("standard");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderResult, setOrderResult] = useState<{ id: string; total: number } | null>(null);
@@ -34,7 +35,8 @@ export function CheckoutPage() {
 
   if (!isAuthenticated) return null;
 
-  const shipping = subtotal >= 4500 ? 0 : 450;
+  const freeShipping = subtotal >= 4500;
+  const shipping = shippingType === "express" ? 850 : (freeShipping ? 0 : 450);
   const grand = total + shipping;
 
   if (orderResult) {
@@ -107,13 +109,14 @@ export function CheckoutPage() {
         email: email || undefined,
         phone: phone || undefined,
         paymentMethod: payment,
-        shipping: shipping === 0 ? "standard" : "express",
+        shipping: shippingType,
         items: lines.map((l) => ({
           productId: l.product.id,
           quantity: l.qty,
         })),
       });
       clear();
+      clearPromo();
       setOrderResult({ id: order.id, total: order.total });
       toast("Order placed successfully!", "success");
     } catch (err: any) {
@@ -153,10 +156,17 @@ export function CheckoutPage() {
                   <ShippingOption
                     label="Standard"
                     sub="3–5 business days"
-                    price={shipping === 0 ? "Free" : fmt(450)}
-                    selected
+                    price={freeShipping ? "Free" : fmt(450)}
+                    selected={shippingType === "standard"}
+                    onSelect={() => setShippingType("standard")}
                   />
-                  <ShippingOption label="Express" sub="Next day · Addis" price={fmt(850)} />
+                  <ShippingOption
+                    label="Express"
+                    sub="Next day · Addis"
+                    price={fmt(850)}
+                    selected={shippingType === "express"}
+                    onSelect={() => setShippingType("express")}
+                  />
                 </div>
               </Section>
 
@@ -317,10 +327,11 @@ function Input({
 }
 
 function ShippingOption({
-  label, sub, price, selected,
-}: { label: string; sub: string; price: string; selected?: boolean }) {
+  label, sub, price, selected, onSelect,
+}: { label: string; sub: string; price: string; selected?: boolean; onSelect?: () => void }) {
   return (
     <div
+      onClick={onSelect}
       className={`p-4 rounded-2xl border cursor-pointer transition ${
         selected ? "border-foreground bg-background" : "border-border"
       }`}

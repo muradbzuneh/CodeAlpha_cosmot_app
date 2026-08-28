@@ -84,6 +84,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       add: (id, qty = 1) =>
         setItems((prev) => {
           const ex = prev.find((p) => p.id === id);
+          const product = productMap.get(id);
+          const currentQty = ex?.qty ?? 0;
+          if (product && currentQty + qty > product.stock) {
+            return prev.map((p) => (p.id === id ? { ...p, qty: product.stock } : p));
+          }
           if (ex) return prev.map((p) => (p.id === id ? { ...p, qty: p.qty + qty } : p));
           return [...prev, { id, qty }];
         }),

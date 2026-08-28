@@ -22,7 +22,7 @@ const GENDERS = [
   { key: "all", label: "All" },
   { key: "women", label: "Women" },
   { key: "men", label: "Men" },
-  { key: "all", label: "Unisex" },
+    { key: "unisex", label: "Unisex" },
 ];
 
 const AGES = [

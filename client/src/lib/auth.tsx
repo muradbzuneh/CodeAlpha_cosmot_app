@@ -68,6 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     localStorage.removeItem("cosmot-token");
     localStorage.removeItem("cosmot-user");
+    localStorage.removeItem("cosmot-cart-v1");
+    localStorage.removeItem("cosmot-promo-v1");
     setToken(null);
     setUser(null);
   };
