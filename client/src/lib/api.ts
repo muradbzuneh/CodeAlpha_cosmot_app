@@ -15,12 +15,11 @@ export type ApiProduct = {
 };
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
-const API_ROOT = API_BASE.replace(/\/api\/?$/, "");
 
 export function resolveImageUrl(url: string | null | undefined): string {
   if (!url) return "/placeholder.svg";
   if (url.startsWith("http")) return url;
-  return `${API_ROOT}${url}`;
+  return url;
 }
 
 async function request<T>(
