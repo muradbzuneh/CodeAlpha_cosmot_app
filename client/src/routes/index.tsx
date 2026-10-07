@@ -416,7 +416,7 @@ export function Home() {
             <h3 className="font-display text-4xl md:text-5xl italic">From the atelier.</h3>
           </div>
           <div className="grid sm:grid-cols-3 gap-6">
-            {allProducts.slice(0, 3).map((p, i) => (
+            {allProducts.slice(0, 3).map((p) => (
               <article key={p.id} className="group cursor-pointer">
                 <div className="aspect-square rounded-2xl overflow-hidden mb-4">
                   <img
