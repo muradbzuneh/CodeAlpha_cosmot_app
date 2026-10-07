@@ -5,10 +5,6 @@ import { ProductCard } from "@/components/product-card";
 import { AnimateIn } from "@/components/animate-in";
 import { useProducts, type ApiProduct } from "@/lib/products-api";
 import { api, type ProductFilters, resolveImageUrl } from "@/lib/api";
-import ingredientImg from "@/assets/ingredient-oil.jpg";
-import journalMorning from "@/assets/journal-morning.jpg";
-import journalOil from "@/assets/journal-oil.jpg";
-import journalDew from "@/assets/journal-dew.jpg";
 
 const CATEGORIES = [
   { key: "all", label: "All Rituals" },
@@ -399,8 +395,8 @@ export function Home() {
           </div>
           <div className="order-1 md:order-2 rounded-[2.5rem] overflow-hidden aspect-[4/3] md:aspect-square">
             <img
-              src={ingredientImg}
-              alt="Macro drop of clear oil falling into water"
+              src={resolveImageUrl(allProducts[0]?.imageUrl)}
+              alt={allProducts[0]?.name || "Cosmot product"}
               loading="lazy"
               width={1024}
               height={512}
@@ -420,24 +416,22 @@ export function Home() {
             <h3 className="font-display text-4xl md:text-5xl italic">From the atelier.</h3>
           </div>
           <div className="grid sm:grid-cols-3 gap-6">
-            {[
-              { tag: "Ritual", title: "The three-minute morning protocol.", img: journalMorning, alt: "Morning skincare ritual with cream jar and herbal tea" },
-              { tag: "Ingredient", title: "Why fermented oils outperform virgin pressings.", img: journalOil, alt: "Golden amber oil pouring from a dropper bottle" },
-              { tag: "Field notes", title: "A week on the Dew Concentrate.", img: journalDew, alt: "Frosted glass cream jar on wet stone with dew drops" },
-            ].map((post) => (
-              <article key={post.title} className="group cursor-pointer">
+            {allProducts.slice(0, 3).map((p, i) => (
+              <article key={p.id} className="group cursor-pointer">
                 <div className="aspect-square rounded-2xl overflow-hidden mb-4">
                   <img
-                    src={post.img}
-                    alt={post.alt}
+                    src={resolveImageUrl(p.imageUrl)}
+                    alt={p.name}
                     loading="lazy"
                     width={1024}
                     height={1024}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                   />
                 </div>
-                <p className="text-[10px] uppercase tracking-widest text-background/60 mb-2">{post.tag}</p>
-                <h4 className="font-display text-xl italic leading-snug">{post.title}</h4>
+                <p className="text-[10px] uppercase tracking-widest text-background/60 mb-2">
+                  {p.category || "Product"}
+                </p>
+                <h4 className="font-display text-xl italic leading-snug">{p.name}</h4>
               </article>
             ))}
           </div>
