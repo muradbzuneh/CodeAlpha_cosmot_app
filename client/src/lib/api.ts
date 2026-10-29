@@ -2,6 +2,9 @@ export type ApiProductVariant = {
   id: string;
   title: string;
   sku?: string | null;
+  shadeColor?: string | null;
+  volume?: string | null;
+  scent?: string | null;
   price: number;
   stock: number;
   isDefault: boolean;
@@ -31,17 +34,24 @@ export type ApiProduct = {
   price: number;
   stock: number;
   imageUrl: string | null;
+  images?: string[];
   category: string | null;
   gender: string | null;
   age: string | null;
   bodyPart: string | null;
   size: string | null;
   isNew: boolean | null;
+  isActive?: boolean;
+  archivedAt?: string | null;
   ingredients?: string | null;
   keyIngredients?: string | null;
+  allergens?: string | null;
+  warnings?: string | null;
+  patchTest?: string | null;
   skinType?: string | null;
   routineStep?: string | null;
   pao?: string | null;
+  efdaNumber?: string | null;
   benefits?: string | null;
   variants?: ApiProductVariant[];
   reviews?: ApiReview[];
@@ -180,7 +190,7 @@ export const api = {
     paymentMethod?: string;
     shipping?: string;
     promoCode?: string | null;
-    items: { productId: string; quantity: number }[];
+    items: { productId: string; variantId?: string; variantTitle?: string; quantity: number }[];
   }) =>
     request<{ order: ApiOrder; checkoutUrl?: string | null; txRef?: string; warning?: string }>("/orders", {
       method: "POST",

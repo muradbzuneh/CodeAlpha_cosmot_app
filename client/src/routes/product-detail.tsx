@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/components/toast";
 import { api, type ApiProduct, type ApiProductVariant, resolveImageUrl } from "@/lib/api";
 import { Skeleton } from "@/components/skeleton";
-import { Star, ChevronDown, CheckCircle2, Sparkles } from "lucide-react";
+import { Star, ChevronDown, CheckCircle2, Sparkles, AlertTriangle, ShieldCheck } from "lucide-react";
 
 function StarRating({ rating, size = 12 }: { rating: number; size?: number }) {
   return (
@@ -31,11 +31,13 @@ function AccordionItem({
   title,
   isOpen,
   onToggle,
+  badge,
   children,
 }: {
   title: string;
   isOpen: boolean;
   onToggle: () => void;
+  badge?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -45,9 +47,16 @@ function AccordionItem({
         onClick={onToggle}
         className="w-full flex items-center justify-between text-left group transition-colors"
       >
-        <span className="text-xs uppercase tracking-widest font-medium text-foreground group-hover:text-accent transition">
-          {title}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs uppercase tracking-widest font-medium text-foreground group-hover:text-accent transition">
+            {title}
+          </span>
+          {badge && (
+            <span className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground font-medium">
+              {badge}
+            </span>
+          )}
+        </div>
         <ChevronDown
           size={16}
           className={`text-muted-foreground transition-transform duration-300 ${
@@ -70,6 +79,8 @@ export function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<ApiProductVariant | null>(null);
+  const [activeImage, setActiveImage] = useState<string>("");
+  const [zoomPos, setZoomPos] = useState<{ x: number; y: number } | null>(null);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>("ingredients");
@@ -89,6 +100,7 @@ export function ProductDetailPage() {
       .getProduct(productId)
       .then((data) => {
         setProduct(data);
+        setActiveImage(data.imageUrl || data.images?.[0] || "");
         if (data.variants && data.variants.length > 0) {
           const defaultVar = data.variants.find((v) => v.isDefault) || data.variants[0];
           setSelectedVariant(defaultVar);
@@ -100,6 +112,20 @@ export function ProductDetailPage() {
 
   const activePrice = selectedVariant?.price ?? product?.price ?? 0;
   const activeStock = selectedVariant?.stock ?? product?.stock ?? 0;
+
+  // Combine product.imageUrl and product.images into unique list
+  const galleryImages = product
+    ? Array.from(new Set([product.imageUrl, ...(product.images || [])].filter(Boolean))) as string[]
+    : [];
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomPos({ x, y });
+  };
+
+  const handleMouseLeave = () => setZoomPos(null);
 
   const handleAdd = () => {
     if (!isAuthenticated || !product) return;
@@ -185,25 +211,69 @@ export function ProductDetailPage() {
             <>
               {/* Product Showcase Section */}
               <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-start">
-                {/* Left: Image Showcase */}
+                {/* Left: Multi-Image Gallery with Interactive Zoom */}
                 <div className="space-y-4">
-                  <div className="relative w-full aspect-[4/5] bg-stone-100 rounded-[2rem] overflow-hidden border border-border/40">
+                  {/* Main Image with Zoom on Hover */}
+                  <div
+                    onMouseMove={handleMouseMove}
+                    onMouseLeave={handleMouseLeave}
+                    className="relative w-full aspect-[4/5] bg-stone-100 rounded-[2rem] overflow-hidden border border-border/40 cursor-crosshair group select-none shadow-sm"
+                  >
                     <img
-                      src={resolveImageUrl(product.imageUrl)}
+                      src={resolveImageUrl(activeImage || product.imageUrl)}
                       alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.02]"
+                      style={{
+                        transformOrigin: zoomPos ? `${zoomPos.x}% ${zoomPos.y}%` : "center center",
+                        transform: zoomPos ? "scale(1.85)" : "scale(1)",
+                      }}
+                      className="w-full h-full object-cover transition-transform duration-150 pointer-events-none"
                     />
+
+                    {/* Floating Badges */}
                     {product.isNew && (
                       <span className="absolute top-4 left-4 bg-background/90 backdrop-blur px-3 py-1.5 rounded-full text-[10px] uppercase tracking-widest shadow-sm">
                         New Formula
                       </span>
                     )}
                     {product.pao && (
-                      <span className="absolute top-4 right-4 bg-background/80 backdrop-blur px-2.5 py-1 rounded-full text-[10px] font-mono tracking-wider border border-border">
+                      <span className="absolute top-4 right-4 bg-background/85 backdrop-blur px-2.5 py-1 rounded-full text-[10px] font-mono tracking-wider border border-border">
                         PAO {product.pao}
                       </span>
                     )}
+
+                    {/* Zoom Hint Indicator */}
+                    <div className="absolute bottom-4 left-4 bg-background/85 backdrop-blur px-3 py-1 rounded-full text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 opacity-90 group-hover:opacity-0 transition-opacity">
+                      <Sparkles size={11} className="text-accent" />
+                      <span>Hover image to zoom texture</span>
+                    </div>
                   </div>
+
+                  {/* Multi-Image Thumbnails Carousel */}
+                  {galleryImages.length > 1 && (
+                    <div className="flex gap-2.5 overflow-x-auto pb-1.5 no-scrollbar">
+                      {galleryImages.map((img, idx) => {
+                        const isCurrent = (activeImage || product.imageUrl) === img;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setActiveImage(img)}
+                            className={`relative size-16 sm:size-20 rounded-2xl overflow-hidden border transition-all shrink-0 ${
+                              isCurrent
+                                ? "border-foreground ring-1 ring-foreground scale-[1.03] shadow-sm"
+                                : "border-border/70 opacity-60 hover:opacity-100"
+                            }`}
+                          >
+                            <img
+                              src={resolveImageUrl(img)}
+                              alt={`${product.name} photo ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {/* Clean Cosmetic Assurances */}
                   <div className="grid grid-cols-3 gap-2 text-center pt-2">
@@ -277,11 +347,13 @@ export function ProductDetailPage() {
                     </div>
                   )}
 
-                  {/* Format & Size Variant Selector */}
+                  {/* Format & Size Variant Selector (with Color Swatches & Format Details) */}
                   {product.variants && product.variants.length > 0 && (
                     <div className="mb-6">
                       <div className="flex items-center justify-between mb-2.5">
-                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Select Format</span>
+                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                          {product.variants.some((v) => v.shadeColor) ? "Select Shade / Color" : "Select Format"}
+                        </span>
                         <span className="text-xs font-medium text-foreground">{selectedVariant?.title}</span>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -298,6 +370,14 @@ export function ProductDetailPage() {
                                   : "bg-background text-foreground border-border hover:border-foreground/30 hover:bg-stone-50"
                               }`}
                             >
+                              {/* Visual Shade Color Swatch if cosmetic color */}
+                              {v.shadeColor && (
+                                <span
+                                  className="size-3.5 rounded-full border border-black/15 shrink-0 shadow-inner"
+                                  style={{ backgroundColor: v.shadeColor }}
+                                  aria-hidden="true"
+                                />
+                              )}
                               <span>{v.title}</span>
                               <span className={`text-[10px] ${isSelected ? "text-background/80" : "text-muted-foreground"}`}>
                                 {fmt(v.price)}
@@ -379,8 +459,9 @@ export function ProductDetailPage() {
                     </Link>
                   )}
 
-                  {/* Cosmetics Accordion Disclosures */}
+                  {/* Cosmetics Regulatory & Transparency Accordion Disclosures */}
                   <div className="mt-8 border-t border-border pt-2">
+                    {/* 1. How to Apply & Routine Guidance */}
                     {product.routineStep && (
                       <AccordionItem
                         title="How to Apply & Routine"
@@ -399,16 +480,31 @@ export function ProductDetailPage() {
                       </AccordionItem>
                     )}
 
+                    {/* 2. Full INCI Ingredients & Allergens Disclosure */}
                     {product.ingredients && (
                       <AccordionItem
                         title="Full Ingredients (INCI Transparency)"
+                        badge="EU / EFDA"
                         isOpen={openSection === "ingredients"}
                         onToggle={() => setOpenSection(openSection === "ingredients" ? null : "ingredients")}
                       >
-                        <p className="text-[11px] leading-relaxed text-muted-foreground/90 font-mono">
+                        <p className="text-[11px] leading-relaxed text-muted-foreground/90 font-mono mb-3">
                           {product.ingredients}
                         </p>
-                        <div className="mt-3.5 flex flex-wrap gap-3 text-[10px] uppercase tracking-widest text-accent">
+
+                        {/* Declared Allergens */}
+                        {product.allergens && (
+                          <div className="p-3 rounded-xl bg-stone-50 border border-border/80 mb-3">
+                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-1">
+                              Allergen Declaration
+                            </p>
+                            <p className="text-[11px] leading-relaxed text-muted-foreground">
+                              {product.allergens}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex flex-wrap gap-3 text-[10px] uppercase tracking-widest text-accent">
                           <span>✓ Botanical Extracts</span>
                           <span>✓ Cruelty-Free</span>
                           <span>✓ Clean Formula</span>
@@ -416,6 +512,43 @@ export function ProductDetailPage() {
                       </AccordionItem>
                     )}
 
+                    {/* 3. Safety, Warnings & Patch Test (Mandatory EFDA / Regulatory) */}
+                    {(product.warnings || product.patchTest || product.efdaNumber) && (
+                      <AccordionItem
+                        title="Safety, Warnings & Patch Test"
+                        isOpen={openSection === "safety"}
+                        onToggle={() => setOpenSection(openSection === "safety" ? null : "safety")}
+                      >
+                        {product.warnings && (
+                          <div className="mb-3.5 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-foreground">
+                            <div className="flex items-center gap-1.5 text-amber-900 font-semibold text-[10px] uppercase tracking-wider mb-1">
+                              <AlertTriangle size={13} className="text-amber-700" />
+                              Precautions & Contraindications
+                            </div>
+                            <p className="text-xs leading-relaxed text-amber-950/90">{product.warnings}</p>
+                          </div>
+                        )}
+
+                        {product.patchTest && (
+                          <div className="mb-3.5">
+                            <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-1">
+                              <ShieldCheck size={13} className="text-emerald-700" />
+                              Patch Test Instructions
+                            </div>
+                            <p className="text-xs leading-relaxed text-muted-foreground">{product.patchTest}</p>
+                          </div>
+                        )}
+
+                        {product.efdaNumber && (
+                          <div className="pt-2.5 border-t border-border/40 flex items-center justify-between text-[11px] text-muted-foreground">
+                            <span className="uppercase text-[9px] tracking-widest">EFDA Notification No.</span>
+                            <span className="font-mono font-medium text-foreground">{product.efdaNumber}</span>
+                          </div>
+                        )}
+                      </AccordionItem>
+                    )}
+
+                    {/* 4. Skin Compatibility & Benefits */}
                     {product.benefits && (
                       <AccordionItem
                         title="Skin Compatibility & Benefits"
@@ -475,7 +608,7 @@ export function ProductDetailPage() {
                 {showReviewForm && (
                   <form
                     onSubmit={handleReviewSubmit}
-                    className="mb-12 p-6 md:p-8 rounded-3xl bg-stone-50/90 border border-border max-w-2xl animate-fade-in"
+                    className="mb-12 p-6 md:p-8 rounded-3xl bg-stone-50/90 border border-border max-w-2xl animate-fade-in shadow-sm"
                   >
                     <h3 className="font-display text-2xl italic mb-1">Share your experience</h3>
                     <p className="text-xs text-muted-foreground mb-6">

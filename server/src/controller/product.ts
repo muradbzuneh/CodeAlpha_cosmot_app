@@ -26,6 +26,11 @@ export async function getProducts(req: Request, res: Response) {
 
     const where: Prisma.ProductWhereInput = {};
 
+    // Default to active only; include archived only if explicitly requested
+    if (req.query.includeArchived !== "true") {
+      where.isActive = true;
+    }
+
     const category = req.query.category as string | undefined;
     if (category && category !== "all") {
       where.category = category;
@@ -232,10 +237,17 @@ export async function updateProduct(req: Request, res: Response) {
 export async function deleteProduct(req: Request, res: Response) {
   try {
     const id = String(req.params.id);
-    await prisma.product.delete({ where: { id } });
-    res.status(204).end();
+    // Soft delete / archive to safely preserve historical orders and invoices
+    const archived = await prisma.product.update({
+      where: { id },
+      data: {
+        isActive: false,
+        archivedAt: new Date(),
+      },
+    });
+    sendJson(res, 200, { message: "Product archived successfully", id: archived.id });
   } catch (error) {
-    console.error(error);
+    console.error("Archive product error:", error);
     sendJson(res, 404, { error: "Product not found" });
   }
 }

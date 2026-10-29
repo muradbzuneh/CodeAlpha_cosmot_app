@@ -25,6 +25,8 @@ const createOrderSchema = z.object({
     .array(
       z.object({
         productId: z.string(),
+        variantId: z.string().optional(),
+        variantTitle: z.string().optional(),
         quantity: z.number().int().positive(),
       })
     )
@@ -81,8 +83,50 @@ export async function createOrder(req: Request, res: Response) {
     // Max 20 characters for Chapa Global compatibility: e.g. "c_mvthxba7_8hy3" (15 chars)
     const txRef = `c_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`.slice(0, 20);
 
-    // 2. Atomic Transaction: create order + decrement stock
+    // 2. Atomic Transaction: Concurrency-Safe Inventory Reservation & Order Creation
     const order = await prisma.$transaction(async (tx) => {
+      // Row-level lock & conditional stock verification
+      for (const item of body.items) {
+        // Atomic product decrement (acquires PostgreSQL row write lock)
+        const updatedProd = await tx.product.updateMany({
+          where: {
+            id: item.productId,
+            isActive: true,
+            stock: { gte: item.quantity },
+          },
+          data: {
+            stock: { decrement: item.quantity },
+          },
+        });
+
+        if (updatedProd.count === 0) {
+          const p = productMap.get(item.productId);
+          throw new Error(
+            `Insufficient stock for "${p?.name || "product"}". The item may have just sold out.`
+          );
+        }
+
+        // Atomic variant decrement (if variant selected)
+        if (item.variantId) {
+          const updatedVar = await tx.productVariant.updateMany({
+            where: {
+              id: item.variantId,
+              productId: item.productId,
+              stock: { gte: item.quantity },
+            },
+            data: {
+              stock: { decrement: item.quantity },
+            },
+          });
+
+          if (updatedVar.count === 0) {
+            throw new Error(
+              `The selected format/size for "${productMap.get(item.productId)?.name}" is no longer available in this quantity.`
+            );
+          }
+        }
+      }
+
       const newOrder = await tx.order.create({
         data: {
           userId,
@@ -106,20 +150,15 @@ export async function createOrder(req: Request, res: Response) {
           items: {
             create: body.items.map((item) => ({
               productId: item.productId,
+              variantId: item.variantId || null,
+              variantTitle: item.variantTitle || null,
               quantity: item.quantity,
               price: productMap.get(item.productId)!.price,
             })),
           },
         },
-        include: { items: { include: { product: true } } },
+        include: { items: { include: { product: true, variant: true } } },
       });
-
-      for (const item of body.items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { stock: { decrement: item.quantity } },
-        });
-      }
 
       return newOrder;
     });
@@ -188,6 +227,12 @@ export async function createOrder(req: Request, res: Response) {
             where: { id: item.productId },
             data: { stock: { increment: item.quantity } },
           });
+          if (item.variantId) {
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { stock: { increment: item.quantity } },
+            });
+          }
         }
       });
 
@@ -502,6 +547,12 @@ export async function updateOrderStatus(req: Request, res: Response) {
             where: { id: item.productId },
             data: { stock: { increment: item.quantity } },
           });
+          if (item.variantId) {
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { stock: { increment: item.quantity } },
+            });
+          }
         }
       }
 
