@@ -70,7 +70,7 @@ router.post("/login", async (req, res) => {
     const body = loginSchema.parse(req.body);
 
     const user = await prisma.user.findUnique({ where: { email: body.email } });
-    if (!user) {
+    if (!user || !user.password) {
       sendJson(res, 401, { error: "Invalid credentials" });
       return;
     }
@@ -152,6 +152,10 @@ router.put("/profile", authenticate, async (req, res) => {
     if (body.newPassword) {
       if (!body.currentPassword) {
         sendJson(res, 400, { error: "Current password is required to set a new password" });
+        return;
+      }
+      if (!user.password) {
+        sendJson(res, 400, { error: "Current password is not set" });
         return;
       }
       const valid = await bcrypt.compare(body.currentPassword, user.password);

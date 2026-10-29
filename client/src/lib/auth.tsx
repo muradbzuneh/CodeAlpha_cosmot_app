@@ -5,13 +5,15 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { api } from "./api";
+import { authClient, requestPasswordReset, resetPassword } from "./auth-client";
 
-type User = {
+export type User = {
   id: string;
   email: string;
   name: string | null;
   role: string;
+  image?: string | null;
+  emailVerified?: boolean;
   createdAt?: string;
 };
 
@@ -21,7 +23,9 @@ type AuthCtx = {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (newPassword: string, token: string) => Promise<void>;
   setUser: (user: User) => void;
   isAuthenticated: boolean;
 };
@@ -29,65 +33,127 @@ type AuthCtx = {
 const Ctx = createContext<AuthCtx | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: sessionData, isPending } = authClient.useSession();
+  const [localUser, setLocalUser] = useState<User | null>(null);
 
+  // Sync session with local state
   useEffect(() => {
-    const savedToken = localStorage.getItem("cosmot-token");
-    const savedUser = localStorage.getItem("cosmot-user");
-
-    if (savedToken && savedUser) {
-      try {
-        setToken(savedToken);
-        setUser(JSON.parse(savedUser));
-      } catch {
-        localStorage.removeItem("cosmot-token");
-        localStorage.removeItem("cosmot-user");
+    if (sessionData?.user) {
+      const u: User = {
+        id: sessionData.user.id,
+        email: sessionData.user.email,
+        name: sessionData.user.name || null,
+        role: ((sessionData.user as any).role as string) || "CUSTOMER",
+        image: sessionData.user.image || null,
+        emailVerified: sessionData.user.emailVerified,
+        createdAt: sessionData.user.createdAt ? new Date(sessionData.user.createdAt).toISOString() : undefined,
+      };
+      setLocalUser(u);
+      localStorage.setItem("cosmot-user", JSON.stringify(u));
+      if (sessionData.session?.token) {
+        localStorage.setItem("cosmot-token", sessionData.session.token);
       }
+    } else if (!isPending && !sessionData) {
+      setLocalUser(null);
+      localStorage.removeItem("cosmot-token");
+      localStorage.removeItem("cosmot-user");
     }
-    setLoading(false);
-  }, []);
+  }, [sessionData, isPending]);
 
   const login = async (email: string, password: string) => {
-    const res = await api.login({ email, password });
-    localStorage.setItem("cosmot-token", res.accessToken);
-    localStorage.setItem("cosmot-user", JSON.stringify(res.user));
-    setToken(res.accessToken);
-    setUser(res.user);
+    const res = await authClient.signIn.email({
+      email,
+      password,
+    });
+    if (res.error) {
+      throw new Error(res.error.message || "Invalid credentials");
+    }
+    if (res.data?.user) {
+      const u: User = {
+        id: res.data.user.id,
+        email: res.data.user.email,
+        name: res.data.user.name || null,
+        role: ((res.data.user as any).role as string) || "CUSTOMER",
+      };
+      setLocalUser(u);
+      localStorage.setItem("cosmot-user", JSON.stringify(u));
+    }
   };
 
   const register = async (email: string, password: string, name?: string) => {
-    const res = await api.register({ email, password, name });
-    localStorage.setItem("cosmot-token", res.accessToken);
-    localStorage.setItem("cosmot-user", JSON.stringify(res.user));
-    setToken(res.accessToken);
-    setUser(res.user);
+    const res = await authClient.signUp.email({
+      email,
+      password,
+      name: name || "",
+    });
+    if (res.error) {
+      throw new Error(res.error.message || "Failed to create account");
+    }
+    if (res.data?.user) {
+      const u: User = {
+        id: res.data.user.id,
+        email: res.data.user.email,
+        name: res.data.user.name || null,
+        role: ((res.data.user as any).role as string) || "CUSTOMER",
+      };
+      setLocalUser(u);
+      localStorage.setItem("cosmot-user", JSON.stringify(u));
+    }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await authClient.signOut();
     localStorage.removeItem("cosmot-token");
     localStorage.removeItem("cosmot-user");
     localStorage.removeItem("cosmot-cart-v1");
     localStorage.removeItem("cosmot-promo-v1");
-    setToken(null);
-    setUser(null);
+    setLocalUser(null);
   };
+
+  const handleForgotPassword = async (email: string) => {
+    const redirectUrl = `${window.location.origin}/reset-password`;
+    const res = await requestPasswordReset({
+      email,
+      redirectTo: redirectUrl,
+    });
+    if (res.error) {
+      throw new Error(res.error.message || "Failed to send reset link");
+    }
+  };
+
+  const handleResetPassword = async (newPassword: string, token: string) => {
+    const res = await resetPassword({
+      newPassword,
+      token,
+    });
+    if (res.error) {
+      throw new Error(res.error.message || "Failed to reset password");
+    }
+  };
+
+  const activeUser = localUser || (sessionData?.user ? {
+    id: sessionData.user.id,
+    email: sessionData.user.email,
+    name: sessionData.user.name || null,
+    role: ((sessionData.user as any).role as string) || "CUSTOMER",
+  } : null);
 
   return (
     <Ctx.Provider
       value={{
-        user,
-        token,
-        loading,
+        user: activeUser,
+        token: localStorage.getItem("cosmot-token"),
+        loading: isPending,
         login,
         register,
         logout,
+        forgotPassword: handleForgotPassword,
+        resetPassword: handleResetPassword,
         setUser: (u: User) => {
-          setUser(u);
+          setLocalUser(u);
           localStorage.setItem("cosmot-user", JSON.stringify(u));
         },
-        isAuthenticated: !!token,
+        isAuthenticated: !!activeUser,
       }}
     >
       {children}

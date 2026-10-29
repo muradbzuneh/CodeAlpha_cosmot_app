@@ -11,6 +11,11 @@ const schema = z.object({
   PORT: z.coerce.number().default(4000),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
+  BETTER_AUTH_SECRET: z.string().optional(),
+  BETTER_AUTH_URL: z.string().optional(),
+  RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().default("onboarding@resend.dev"),
+  CHAPA_SECRET_KEY: z.string().optional(),
 });
 
 export const env = schema.parse(process.env);

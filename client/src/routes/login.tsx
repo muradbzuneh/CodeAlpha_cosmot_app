@@ -56,15 +56,19 @@ export function LoginPage() {
             </label>
 
             <label className="block">
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Password</span>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Password</span>
+                <Link to="/forgot-password" className="text-xs text-accent hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••"
-                className="mt-1 w-full px-4 py-3.5 rounded-xl bg-stone-50 border border-border text-sm focus:outline-none focus:border-foreground transition"
-                
+                className="w-full px-4 py-3.5 rounded-xl bg-stone-50 border border-border text-sm focus:outline-none focus:border-foreground transition"
               />
             </label>
 
