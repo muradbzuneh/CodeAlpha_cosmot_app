@@ -1,3 +1,29 @@
+export type ApiProductVariant = {
+  id: string;
+  title: string;
+  sku?: string | null;
+  price: number;
+  stock: number;
+  isDefault: boolean;
+};
+
+export type ApiReview = {
+  id: string;
+  productId: string;
+  userId: string;
+  rating: number;
+  title: string | null;
+  comment: string;
+  skinType: string | null;
+  verified: boolean;
+  createdAt: string;
+  user?: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  };
+};
+
 export type ApiProduct = {
   id: string;
   name: string;
@@ -11,6 +37,17 @@ export type ApiProduct = {
   bodyPart: string | null;
   size: string | null;
   isNew: boolean | null;
+  ingredients?: string | null;
+  keyIngredients?: string | null;
+  skinType?: string | null;
+  routineStep?: string | null;
+  pao?: string | null;
+  benefits?: string | null;
+  variants?: ApiProductVariant[];
+  reviews?: ApiReview[];
+  averageRating?: number;
+  reviewCount?: number;
+  ratingDistribution?: Record<number, number>;
   createdAt?: string;
 };
 
@@ -125,6 +162,12 @@ export const api = {
 
   getProduct: (id: string) =>
     request<ApiProduct>(`/products/${id}`),
+
+  createReview: (productId: string, data: { rating: number; title?: string; comment: string; skinType?: string }) =>
+    request<ApiReview>(`/products/${productId}/reviews`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 
   // Orders
   createOrder: (data: {

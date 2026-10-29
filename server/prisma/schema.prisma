@@ -22,6 +22,7 @@ model User {
   orders   Order[]
   sessions Session[]
   accounts Account[]
+  reviews  Review[]
 }
 
 enum Role {
@@ -30,22 +31,65 @@ enum Role {
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  price       Float
-  stock       Int      @default(0)
-  imageUrl    String?
-  category    String?
-  gender      String?
-  age         String?
-  bodyPart    String?
-  size        String?
-  isNew       Boolean? @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  price          Float
+  stock          Int      @default(0)
+  imageUrl       String?
+  category       String?
+  gender         String?
+  age            String?
+  bodyPart       String?
+  size           String?
+  isNew          Boolean? @default(false)
+  ingredients    String?
+  keyIngredients String?
+  skinType       String?
+  routineStep    String?
+  pao            String?
+  benefits       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   orderItems OrderItem[]
+  variants   ProductVariant[]
+  reviews    Review[]
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  productId String
+  title     String
+  sku       String?
+  price     Float
+  stock     Int      @default(0)
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String
+  rating    Int
+  title     String?
+  comment   String
+  skinType  String?
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([userId])
 }
 
 model Order {

@@ -42,6 +42,13 @@ export function ProductCard({ product }: { product: ApiProduct }) {
               </span>
             )}
           </div>
+          {product.reviewCount && product.reviewCount > 0 ? (
+            <div className="flex items-center gap-1 mb-1 text-[11px]">
+              <span className="text-amber-500">★</span>
+              <span className="font-medium text-foreground text-[10px]">{product.averageRating?.toFixed(1)}</span>
+              <span className="text-[10px] text-muted-foreground">({product.reviewCount})</span>
+            </div>
+          ) : null}
           <h3 className="text-xs font-medium uppercase tracking-tight font-body">{product.name}</h3>
           <p className="text-[11px] text-muted-foreground mt-1 leading-snug line-clamp-2">
             {product.description}
@@ -78,6 +85,13 @@ export function ProductCard({ product }: { product: ApiProduct }) {
             </span>
           )}
         </div>
+        {product.reviewCount && product.reviewCount > 0 ? (
+          <div className="flex items-center gap-1 mb-1 text-[11px]">
+            <span className="text-amber-500">★</span>
+            <span className="font-medium text-foreground text-[10px]">{product.averageRating?.toFixed(1)}</span>
+            <span className="text-[10px] text-muted-foreground">({product.reviewCount})</span>
+          </div>
+        ) : null}
         <h3 className="text-xs font-medium uppercase tracking-tight font-body">{product.name}</h3>
         <p className="text-[11px] text-muted-foreground mt-1 leading-snug line-clamp-2">
           {product.description}

@@ -57,15 +57,29 @@ export async function getProducts(req: Request, res: Response) {
       if (maxPrice) where.price.lte = parseFloat(maxPrice);
     }
 
-    const [products, total] = await Promise.all([
+    const [rawProducts, total] = await Promise.all([
       prisma.product.findMany({
         where,
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,
+        include: {
+          reviews: { select: { rating: true } },
+          variants: { select: { id: true, title: true, price: true, stock: true, isDefault: true } },
+        },
       }),
       prisma.product.count({ where }),
     ]);
+
+    const products = rawProducts.map((p) => {
+      const reviewCount = p.reviews.length;
+      const avg = reviewCount > 0 ? p.reviews.reduce((acc, r) => acc + r.rating, 0) / reviewCount : 5.0;
+      return {
+        ...p,
+        averageRating: +avg.toFixed(1),
+        reviewCount,
+      };
+    });
 
     sendJson(res, 200, {
       products,
@@ -84,15 +98,100 @@ export async function getProductById(req: Request, res: Response) {
     const id = String(req.params.id);
     const product = await prisma.product.findUnique({
       where: { id },
+      include: {
+        variants: {
+          orderBy: { price: "asc" },
+        },
+        reviews: {
+          include: {
+            user: { select: { id: true, name: true, image: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+      },
     });
+
     if (!product) {
       sendJson(res, 404, { error: "Product not found" });
       return;
     }
-    sendJson(res, 200, product);
+
+    const reviewCount = product.reviews.length;
+    const avg = reviewCount > 0
+      ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / reviewCount
+      : 5.0;
+
+    const ratingDistribution: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    for (const r of product.reviews) {
+      if (ratingDistribution[r.rating] !== undefined) {
+        ratingDistribution[r.rating]++;
+      }
+    }
+
+    sendJson(res, 200, {
+      ...product,
+      averageRating: +avg.toFixed(1),
+      reviewCount,
+      ratingDistribution,
+    });
   } catch (error) {
     console.error(error);
     sendJson(res, 500, { error: "Failed to fetch product" });
+  }
+}
+
+const reviewSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  title: z.string().max(120).optional(),
+  comment: z.string().min(3).max(1000),
+  skinType: z.string().max(50).optional(),
+});
+
+export async function createProductReview(req: Request, res: Response) {
+  try {
+    const productId = String(req.params.id);
+    const userId = req.user!.sub;
+
+    const validated = reviewSchema.parse(req.body);
+
+    const product = await prisma.product.findUnique({ where: { id: productId } });
+    if (!product) {
+      sendJson(res, 404, { error: "Product not found" });
+      return;
+    }
+
+    // Check if customer previously completed a paid order containing this product
+    const purchasedOrder = await prisma.order.findFirst({
+      where: {
+        userId,
+        paymentStatus: "PAID",
+        items: { some: { productId } },
+      },
+    });
+
+    const review = await prisma.review.create({
+      data: {
+        productId,
+        userId,
+        rating: validated.rating,
+        title: validated.title || null,
+        comment: validated.comment,
+        skinType: validated.skinType || null,
+        verified: !!purchasedOrder,
+      },
+      include: {
+        user: { select: { id: true, name: true, image: true } },
+      },
+    });
+
+    sendJson(res, 201, review);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      sendJson(res, 400, { error: "Validation failed", details: error.issues });
+      return;
+    }
+    console.error("Create review error:", error);
+    sendJson(res, 500, { error: "Failed to submit review" });
   }
 }
 
