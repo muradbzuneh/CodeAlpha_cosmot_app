@@ -37,12 +37,15 @@ async function request<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers,
+    credentials: "include",
+  });
 
   if (res.status === 401) {
     localStorage.removeItem("cosmot-token");
     localStorage.removeItem("cosmot-user");
-    window.location.href = "/login";
     throw new Error("Unauthorized");
   }
 
@@ -89,7 +92,7 @@ export const api = {
       name: string | null;
       role: string;
       createdAt: string;
-    }>("/auth/me"),
+    }>("/user/me"),
 
   updateProfile: (data: { name?: string; email?: string; currentPassword?: string; newPassword?: string }) =>
     request<{
@@ -98,7 +101,7 @@ export const api = {
       name: string | null;
       role: string;
       createdAt: string;
-    }>("/auth/profile", { method: "PUT", body: JSON.stringify(data) }),
+    }>("/user/profile", { method: "PUT", body: JSON.stringify(data) }),
 
   // Products
   getProducts: (params?: ProductFilters) => {
@@ -133,9 +136,16 @@ export const api = {
     phone?: string;
     paymentMethod?: string;
     shipping?: string;
+    promoCode?: string | null;
     items: { productId: string; quantity: number }[];
   }) =>
-    request<ApiOrder>("/orders", { method: "POST", body: JSON.stringify(data) }),
+    request<{ order: ApiOrder; checkoutUrl?: string | null; txRef?: string; warning?: string }>("/orders", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  verifyPayment: (txRef: string) =>
+    request<{ verified: boolean; order: ApiOrder; message?: string }>(`/orders/verify/${encodeURIComponent(txRef)}`),
 
   getOrders: () => request<ApiOrder[]>("/orders"),
 
@@ -185,7 +195,14 @@ export const api = {
 export type ApiOrder = {
   id: string;
   status: string;
+  paymentStatus?: string;
   total: number;
+  subtotal?: number;
+  discount?: number;
+  vat?: number;
+  shippingFee?: number;
+  promoCode?: string | null;
+  txRef?: string | null;
   address: string | null;
   city: string | null;
   postalCode: string | null;

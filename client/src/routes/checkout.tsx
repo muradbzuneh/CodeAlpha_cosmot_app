@@ -6,25 +6,26 @@ import { useCart, fmt } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/components/toast";
 import { api, resolveImageUrl } from "@/lib/api";
+import { Lock, ShieldCheck, CheckCircle2 } from "lucide-react";
 
-type Payment = "telebirr" | "bank" | "card" | "cod";
+type Payment = "chapa" | "cod";
 
 export function CheckoutPage() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { lines, subtotal, discount, vat, total, promo, clear, clearPromo } = useCart();
-  const [payment, setPayment] = useState<Payment>("telebirr");
+  const [payment, setPayment] = useState<Payment>("chapa");
   const [shippingType, setShippingType] = useState<"standard" | "express">("standard");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderResult, setOrderResult] = useState<{ id: string; total: number } | null>(null);
   const { toast } = useToast();
 
-  const [customerName, setCustomerName] = useState("");
-  const [email, setEmail] = useState("");
+  const [customerName, setCustomerName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState("Addis Ababa");
   const [postalCode, setPostalCode] = useState("");
 
   useEffect(() => {
@@ -32,6 +33,13 @@ export function CheckoutPage() {
       navigate({ to: "/login" });
     }
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (user) {
+      if (!customerName && user.name) setCustomerName(user.name);
+      if (!email && user.email) setEmail(user.email);
+    }
+  }, [user]);
 
   if (!isAuthenticated) return null;
 
@@ -45,7 +53,9 @@ export function CheckoutPage() {
         <SiteNav />
         <main className="px-4 md:px-8 py-16 md:py-24">
           <div className="mx-auto max-w-lg text-center">
-            <div className="mb-6 text-5xl">✓</div>
+            <div className="mb-6 size-16 mx-auto rounded-full bg-emerald-50 text-emerald-600 grid place-items-center">
+              <CheckCircle2 size={36} />
+            </div>
             <p className="text-[10px] uppercase tracking-[0.25em] text-accent mb-3">Order confirmed</p>
             <h1 className="font-display text-4xl md:text-5xl italic mb-4">Thank you</h1>
             <p className="text-muted-foreground text-sm mb-2">
@@ -101,7 +111,7 @@ export function CheckoutPage() {
     setError("");
     setSubmitting(true);
     try {
-      const order = await api.createOrder({
+      const res = await api.createOrder({
         address,
         city: city || undefined,
         postalCode: postalCode || undefined,
@@ -110,14 +120,23 @@ export function CheckoutPage() {
         phone: phone || undefined,
         paymentMethod: payment,
         shipping: shippingType,
+        promoCode: promo,
         items: lines.map((l) => ({
           productId: l.product.id,
           quantity: l.qty,
         })),
       });
+
       clear();
       clearPromo();
-      setOrderResult({ id: order.id, total: order.total });
+
+      if (res.checkoutUrl) {
+        toast("Redirecting to secure Chapa payment portal...", "info");
+        window.location.href = res.checkoutUrl;
+        return;
+      }
+
+      setOrderResult({ id: res.order.id, total: res.order.total });
       toast("Order placed successfully!", "success");
     } catch (err: any) {
       setError(err.message || "Failed to place order");
@@ -148,7 +167,9 @@ export function CheckoutPage() {
 
               <Section title="Delivery">
                 <div className="grid sm:grid-cols-2 gap-3">
-                  <Input label="Address" required placeholder="Bole, Sub-city 03" className="sm:col-span-2" value={address} onChange={(e) => setAddress(e.target.value)} />
+                  <div className="sm:col-span-2">
+                    <Input label="Street address" required placeholder="Bole Sub-city, Woreda 03" value={address} onChange={(e) => setAddress(e.target.value)} />
+                  </div>
                   <Input label="City" required placeholder="Addis Ababa" value={city} onChange={(e) => setCity(e.target.value)} />
                   <Input label="Postal code" placeholder="1000" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
                 </div>
@@ -170,80 +191,65 @@ export function CheckoutPage() {
                 </div>
               </Section>
 
-              <Section title="Payment">
-                <div className="grid gap-3">
+              <Section title="Payment Method">
+                <div className="grid gap-4">
+                  {/* Option 1: Chapa */}
                   <PayOption
-                    id="telebirr"
+                    id="chapa"
                     current={payment}
                     onSelect={setPayment}
-                    title="Telebirr"
-                    sub="Mobile wallet · instant"
-                    badge="ET"
+                    title="Chapa Payment Gateway"
+                    sub="Telebirr · CBE Birr · Awash · Visa · Mastercard"
+                    badge="Instant"
                   >
-                    {payment === "telebirr" && (
-                      <div className="pt-4 border-t border-border mt-4 grid gap-3">
-                        <Input label="Telebirr number" required placeholder="+251 9XX XXX XXX" />
-                        <p className="text-xs text-muted-foreground">
-                          You'll receive a USSD prompt on your phone to confirm the {fmt(grand)} payment.
+                    {payment === "chapa" && (
+                      <div className="pt-4 border-t border-border mt-4 space-y-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            Telebirr
+                          </span>
+                          <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-violet-50 text-violet-800 border border-violet-200">
+                            CBE Birr
+                          </span>
+                          <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">
+                            Awash Birr
+                          </span>
+                          <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-stone-100 text-stone-800 border border-stone-200">
+                            Visa / Mastercard
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed flex items-center gap-1.5">
+                          <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
+                          You will be securely redirected to Chapa's official hosted portal to complete payment with your mobile wallet or bank card.
                         </p>
                       </div>
                     )}
                   </PayOption>
 
-                  <PayOption
-                    id="bank"
-                    current={payment}
-                    onSelect={setPayment}
-                    title="Bank Transfer"
-                    sub="CBE · Awash · Dashen"
-                  >
-                    {payment === "bank" && (
-                      <div className="pt-4 border-t border-border mt-4 grid gap-3 text-sm">
-                        <div className="bg-stone-50 rounded-xl p-4">
-                          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                            Transfer to
-                          </p>
-                          <p className="font-medium">Cosmot Cosmetics PLC</p>
-                          <p className="tabular-nums">CBE · 1000 2345 6789 012</p>
-                        </div>
-                        <Input label="Transfer reference" required placeholder="TRX-..." />
-                      </div>
-                    )}
-                  </PayOption>
-
-                  <PayOption
-                    id="card"
-                    current={payment}
-                    onSelect={setPayment}
-                    title="Credit / Debit Card"
-                    sub="Visa · Mastercard · Amex"
-                  >
-                    {payment === "card" && (
-                      <div className="pt-4 border-t border-border mt-4 grid gap-3">
-                        <Input label="Card number" required placeholder="4242 4242 4242 4242" />
-                        <div className="grid grid-cols-2 gap-3">
-                          <Input label="Expiry" required placeholder="MM / YY" />
-                          <Input label="CVC" required placeholder="123" />
-                        </div>
-                        <Input label="Name on card" required placeholder="Selam Tadesse" />
-                      </div>
-                    )}
-                  </PayOption>
-
+                  {/* Option 2: Cash on Delivery */}
                   <PayOption
                     id="cod"
                     current={payment}
                     onSelect={setPayment}
-                    title="Cash on Delivery"
-                    sub="Addis only · +ETB 450 fee"
-                  />
+                    title="Cash on Delivery (COD)"
+                    sub="Pay cash when parcel arrives at your door"
+                    badge="Addis &amp; Kombolcha"
+                  >
+                    {payment === "cod" && (
+                      <div className="pt-4 border-t border-border mt-4">
+                        <p className="text-xs text-muted-foreground">
+                          Please have exact cash of <strong className="text-foreground">{fmt(grand)}</strong> ready upon courier delivery.
+                        </p>
+                      </div>
+                    )}
+                  </PayOption>
                 </div>
               </Section>
             </div>
 
             <aside className="lg:sticky lg:top-24 lg:self-start">
               <div className="bg-stone-50 rounded-3xl p-6 md:p-8 space-y-5">
-                <h2 className="font-display text-2xl italic">Order</h2>
+                <h2 className="font-display text-2xl italic">Order Summary</h2>
                 <div className="space-y-3 max-h-64 overflow-y-auto no-scrollbar pr-1">
                   {lines.map((l) => (
                     <div key={l.product.id} className="flex gap-3">
@@ -276,18 +282,26 @@ export function CheckoutPage() {
                 </div>
 
                 {error && (
-                  <p className="text-sm text-destructive bg-destructive/10 px-4 py-2.5 rounded-xl">{error}</p>
+                  <div className="text-xs text-destructive bg-destructive/10 p-3.5 rounded-xl border border-destructive/20 leading-relaxed">
+                    <strong>Payment notice:</strong> {error}
+                  </div>
                 )}
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="block w-full text-center bg-foreground text-background py-4 rounded-full text-xs font-medium uppercase tracking-[0.2em] hover:opacity-90 transition disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 w-full text-center bg-foreground text-background py-4 rounded-full text-xs font-medium uppercase tracking-[0.2em] hover:opacity-90 transition disabled:opacity-50"
                 >
-                  {submitting ? "Placing order..." : `Pay ${fmt(grand)}`}
+                  <Lock size={14} />
+                  {submitting
+                    ? "Processing..."
+                    : payment === "chapa"
+                    ? `Pay with Chapa · ${fmt(grand)}`
+                    : `Confirm COD · ${fmt(grand)}`}
                 </button>
                 <p className="text-[10px] text-center text-muted-foreground leading-relaxed">
-                  Secured by 256-bit TLS. By placing this order you agree to our
-                  Terms &amp; Privacy.
+                  Secured by 256-bit TLS &amp; Chapa PCI-DSS. By placing this order you agree to our{" "}
+                  <Link to="/terms" className="underline hover:text-foreground">Terms</Link> &amp;{" "}
+                  <Link to="/privacy" className="underline hover:text-foreground">Privacy</Link>.
                 </p>
               </div>
             </aside>
@@ -302,7 +316,7 @@ export function CheckoutPage() {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
-      <h2 className="font-display text-2xl italic mb-5">{title}</h2>
+      <h2 className="font-display text-2xl italic mb-4">{title}</h2>
       {children}
     </section>
   );
@@ -310,43 +324,74 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 function Input({
   label,
-  className = "",
-  ...rest
-}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; className?: string }) {
+  required,
+  type = "text",
+  placeholder,
+  value,
+  onChange,
+}: {
+  label: string;
+  required?: boolean;
+  type?: string;
+  placeholder?: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
   return (
-    <label className={`block ${className}`}>
+    <label className="block text-xs">
       <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-        {label}
+        {label} {required && <span className="text-accent">*</span>}
       </span>
       <input
-        {...rest}
-        className="mt-1 w-full px-4 py-3 rounded-xl bg-background border border-border text-sm focus:outline-none focus:border-foreground transition"
+        type={type}
+        required={required}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        className="mt-1 w-full px-4 py-3 rounded-xl bg-stone-50 border border-border text-sm focus:outline-none focus:border-foreground transition"
       />
     </label>
   );
 }
 
 function ShippingOption({
-  label, sub, price, selected, onSelect,
-}: { label: string; sub: string; price: string; selected?: boolean; onSelect?: () => void }) {
+  label,
+  sub,
+  price,
+  selected,
+  onSelect,
+}: {
+  label: string;
+  sub: string;
+  price: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   return (
-    <div
+    <button
+      type="button"
       onClick={onSelect}
-      className={`p-4 rounded-2xl border cursor-pointer transition ${
-        selected ? "border-foreground bg-background" : "border-border"
+      className={`p-4 rounded-2xl border text-left transition ${
+        selected ? "border-foreground bg-stone-50" : "border-border hover:border-foreground/40"
       }`}
     >
-      <div className="flex justify-between items-baseline">
-        <span className="text-sm font-medium">{label}</span>
-        <span className="text-sm tabular-nums">{price}</span>
+      <div className="flex justify-between items-baseline mb-1">
+        <span className="font-medium text-sm">{label}</span>
+        <span className="text-xs tabular-nums font-medium">{price}</span>
       </div>
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">{sub}</p>
-    </div>
+      <p className="text-[11px] text-muted-foreground">{sub}</p>
+    </button>
   );
 }
 
 function PayOption({
-  id, current, onSelect, title, sub, badge, children,
+  id,
+  current,
+  onSelect,
+  title,
+  sub,
+  badge,
+  children,
 }: {
   id: Payment;
   current: Payment;
@@ -359,35 +404,53 @@ function PayOption({
   const active = current === id;
   return (
     <div
-      className={`rounded-2xl border p-4 md:p-5 transition cursor-pointer ${
-        active ? "border-foreground bg-stone-50" : "border-border hover:border-foreground/40"
-      }`}
       onClick={() => onSelect(id)}
+      className={`p-5 rounded-2xl border transition cursor-pointer ${
+        active ? "border-foreground bg-stone-50/70 ring-1 ring-foreground/10" : "border-border hover:border-foreground/40"
+      }`}
     >
-      <div className="flex items-center gap-4">
-        <div className={`size-4 rounded-full border ${active ? "border-foreground" : "border-border"} grid place-items-center`}>
-          {active && <div className="size-2 rounded-full bg-foreground" />}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">{title}</span>
-            {badge && (
-              <span className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-accent/15 text-accent">
-                {badge}
-              </span>
-            )}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div
+            className={`size-4 rounded-full border-2 grid place-items-center ${
+              active ? "border-foreground" : "border-muted-foreground/40"
+            }`}
+          >
+            {active && <div className="size-2 rounded-full bg-foreground" />}
           </div>
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-0.5">{sub}</p>
+          <div>
+            <span className="font-medium text-sm text-foreground">{title}</span>
+            <p className="text-[11px] text-muted-foreground mt-0.5">{sub}</p>
+          </div>
         </div>
+        {badge && (
+          <span className="text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-stone-200/60 text-stone-700">
+            {badge}
+          </span>
+        )}
       </div>
       {children}
     </div>
   );
 }
 
-function Row({ label, value, muted, accent }: { label: string; value: string; muted?: boolean; accent?: boolean }) {
+function Row({
+  label,
+  value,
+  accent,
+  muted,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+  muted?: boolean;
+}) {
   return (
-    <div className={`flex justify-between ${muted ? "text-muted-foreground" : ""} ${accent ? "text-accent" : ""}`}>
+    <div
+      className={`flex justify-between ${
+        accent ? "text-emerald-700 font-medium" : muted ? "text-muted-foreground" : ""
+      }`}
+    >
       <span>{label}</span>
       <span className="tabular-nums">{value}</span>
     </div>

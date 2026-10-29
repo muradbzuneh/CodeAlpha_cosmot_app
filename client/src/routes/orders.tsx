@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { useAuth } from "@/lib/auth";
 import { api, type ApiOrder, resolveImageUrl } from "@/lib/api";
 import { fmt } from "@/lib/cart";
+import { useToast } from "@/components/toast";
 import { OrderCardSkeleton } from "@/components/skeleton";
 
 const STEPS = [
@@ -67,9 +68,7 @@ function TrackingBar({ status, compact }: { status: string; compact?: boolean })
       )}
 
       <div className="relative">
-        {/* Track background */}
         <div className="absolute top-[10px] left-0 right-0 h-[2px] bg-border" />
-        {/* Track fill */}
         <div
           className={`absolute top-[10px] left-0 h-[2px] transition-all duration-500 ${
             isCancelled ? "bg-red-400" : "bg-foreground"
@@ -77,13 +76,11 @@ function TrackingBar({ status, compact }: { status: string; compact?: boolean })
           style={{ width: `${(active / (STEPS.length - 1)) * 100}%` }}
         />
 
-        {/* Steps */}
         <div className="relative flex justify-between">
           {STEPS.map((step, i) => {
             const reached = isCancelled ? i <= 0 : i <= active;
             return (
               <div key={step.key} className="flex flex-col items-center w-0 flex-1">
-                {/* Dot */}
                 <div
                   className={`w-[21px] h-[21px] rounded-full border-2 flex items-center justify-center transition-all z-10 ${
                     isCancelled && i > 0
@@ -125,7 +122,6 @@ function TrackingBar({ status, compact }: { status: string; compact?: boolean })
                   )}
                 </div>
 
-                {/* Label */}
                 <p
                   className={`mt-2.5 text-[10px] uppercase tracking-widest font-medium text-center transition-colors ${
                     reached && !isCancelled
@@ -156,21 +152,46 @@ function TrackingBar({ status, compact }: { status: string; compact?: boolean })
 export function OrdersPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const [orders, setOrders] = useState<ApiOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+
+  const fetchOrders = () => {
+    setLoading(true);
+    api
+      .getOrders()
+      .then(setOrders)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate({ to: "/login" });
       return;
     }
-    api
-      .getOrders()
-      .then(setOrders)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+
+    const params = new URLSearchParams(window.location.search);
+    const txRef = params.get("tx_ref");
+
+    if (txRef) {
+      api
+        .verifyPayment(txRef)
+        .then((res) => {
+          if (res.verified) {
+            toast("Payment confirmed! Your order is being processed.", "success");
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          fetchOrders();
+          window.history.replaceState({}, "", "/orders");
+        });
+    } else {
+      fetchOrders();
+    }
   }, [isAuthenticated, navigate]);
 
   if (!isAuthenticated) return null;
@@ -225,7 +246,6 @@ export function OrdersPage() {
                       onClick={() => toggle(order.id)}
                       className="w-full px-6 py-5 text-left hover:bg-stone-50 transition-colors"
                     >
-                      {/* Top row: order ID + total */}
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <span className="text-xs font-medium tabular-nums">
@@ -234,14 +254,27 @@ export function OrdersPage() {
                           <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
                             {relativeTime(order.createdAt)}
                           </span>
+                          {order.paymentStatus === "PAID" && (
+                            <span className="px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-medium bg-emerald-100 text-emerald-800">
+                              Paid
+                            </span>
+                          )}
+                          {order.paymentStatus === "PENDING_ON_DELIVERY" && (
+                            <span className="px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-medium bg-blue-100 text-blue-800">
+                              Pay on Delivery
+                            </span>
+                          )}
+                          {(!order.paymentStatus || order.paymentStatus === "UNPAID") && (
+                            <span className="px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-medium bg-amber-100 text-amber-800">
+                              Unpaid
+                            </span>
+                          )}
                         </div>
                         <span className="text-sm font-medium tabular-nums">{fmt(order.total)}</span>
                       </div>
 
-                      {/* Tracking bar */}
                       <TrackingBar status={order.status} compact />
 
-                      {/* Chevron */}
                       <div className="flex justify-end mt-2">
                         <svg
                           className={`size-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -257,10 +290,8 @@ export function OrdersPage() {
 
                     {isOpen && (
                       <div className="border-t border-border px-6 py-5 space-y-6 bg-stone-50">
-                        {/* Full tracking bar */}
                         <TrackingBar status={order.status} />
 
-                        {/* Details grid */}
                         <div className="grid sm:grid-cols-2 gap-4 text-sm">
                           <div>
                             <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Contact</p>
@@ -278,12 +309,47 @@ export function OrdersPage() {
                           <div>
                             <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Payment</p>
                             <p className="font-medium capitalize">{order.paymentMethod?.replace("-", " ") || "—"}</p>
+                            <p className="text-xs text-muted-foreground">Status: {order.paymentStatus || "UNPAID"}</p>
                           </div>
                           <div>
                             <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Shipping</p>
                             <p className="font-medium capitalize">{order.shipping}</p>
                           </div>
                         </div>
+
+                        {/* Financial breakdown */}
+                        {(order.subtotal || order.discount || order.vat) ? (
+                          <div className="border-t border-border pt-4 text-xs space-y-1.5 text-muted-foreground">
+                            {order.subtotal != null && (
+                              <div className="flex justify-between">
+                                <span>Subtotal</span>
+                                <span className="tabular-nums font-medium text-foreground">{fmt(order.subtotal)}</span>
+                              </div>
+                            )}
+                            {order.discount ? (
+                              <div className="flex justify-between text-emerald-700 font-medium">
+                                <span>Discount {order.promoCode ? `(${order.promoCode})` : ""}</span>
+                                <span className="tabular-nums">- {fmt(order.discount)}</span>
+                              </div>
+                            ) : null}
+                            {order.vat != null && (
+                              <div className="flex justify-between">
+                                <span>VAT (15%)</span>
+                                <span className="tabular-nums">{fmt(order.vat)}</span>
+                              </div>
+                            )}
+                            {order.shippingFee != null && (
+                              <div className="flex justify-between">
+                                <span>Shipping</span>
+                                <span className="tabular-nums">{order.shippingFee === 0 ? "Free" : fmt(order.shippingFee)}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between pt-2 border-t border-border text-sm font-semibold text-foreground">
+                              <span>Total Paid</span>
+                              <span className="tabular-nums">{fmt(order.total)}</span>
+                            </div>
+                          </div>
+                        ) : null}
 
                         {/* Items */}
                         <div>

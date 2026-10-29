@@ -5,9 +5,12 @@ import { CartPage } from "./routes/cart";
 import { CheckoutPage } from "./routes/checkout";
 import { LoginPage } from "./routes/login";
 import { RegisterPage } from "./routes/register";
+import { ForgotPasswordPage } from "./routes/forgot-password";
+import { ResetPasswordPage } from "./routes/reset-password";
 import { OrdersPage } from "./routes/orders";
 import { ProductDetailPage } from "./routes/product-detail";
 import { ProfilePage } from "./routes/profile";
+import { LegalPage } from "./routes/legal";
 import { AdminLayout } from "./routes/admin-layout";
 import { AdminDashboard } from "./routes/admin-dashboard";
 import { AdminOrdersPage } from "./routes/admin-orders";
@@ -42,6 +45,42 @@ const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/register",
   component: RegisterPage,
+});
+
+const forgotPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/forgot-password",
+  component: ForgotPasswordPage,
+});
+
+const resetPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/reset-password",
+  component: ResetPasswordPage,
+});
+
+const termsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/terms",
+  component: () => <LegalPage defaultTab="terms" />,
+});
+
+const privacyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/privacy",
+  component: () => <LegalPage defaultTab="privacy" />,
+});
+
+const returnsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/returns",
+  component: () => <LegalPage defaultTab="returns" />,
+});
+
+const shippingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/shipping",
+  component: () => <LegalPage defaultTab="shipping" />,
 });
 
 const ordersRoute = createRoute({
@@ -92,6 +131,12 @@ const routeTree = rootRoute.addChildren([
   checkoutRoute,
   loginRoute,
   registerRoute,
+  forgotPasswordRoute,
+  resetPasswordRoute,
+  termsRoute,
+  privacyRoute,
+  returnsRoute,
+  shippingRoute,
   ordersRoute,
   productDetailRoute,
   profileRoute,

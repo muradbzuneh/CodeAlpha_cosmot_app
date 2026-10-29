@@ -98,6 +98,7 @@ export function AdminOrdersPage() {
                   <th className="text-left px-4 py-3 text-[10px] uppercase tracking-widest text-muted-foreground font-medium">Customer</th>
                   <th className="text-left px-4 py-3 text-[10px] uppercase tracking-widest text-muted-foreground font-medium">Items</th>
                   <th className="text-left px-4 py-3 text-[10px] uppercase tracking-widest text-muted-foreground font-medium">Total</th>
+                  <th className="text-left px-4 py-3 text-[10px] uppercase tracking-widest text-muted-foreground font-medium">Payment</th>
                   <th className="text-left px-4 py-3 text-[10px] uppercase tracking-widest text-muted-foreground font-medium">Date</th>
                   <th className="text-left px-4 py-3 text-[10px] uppercase tracking-widest text-muted-foreground font-medium">Status</th>
                 </tr>
@@ -114,6 +115,17 @@ export function AdminOrdersPage() {
                     </td>
                     <td className="px-4 py-3 text-xs">{order.items.length} item(s)</td>
                     <td className="px-4 py-3 text-xs font-medium tabular-nums">{fmt(order.total)}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full ${
+                        order.paymentStatus === "PAID"
+                          ? "bg-emerald-100 text-emerald-800"
+                          : order.paymentStatus === "PENDING_ON_DELIVERY"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-amber-100 text-amber-800"
+                      }`}>
+                        {order.paymentStatus || "UNPAID"}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {new Date(order.createdAt).toLocaleDateString()}
                     </td>
