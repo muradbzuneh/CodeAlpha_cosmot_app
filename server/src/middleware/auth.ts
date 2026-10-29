@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "../lib/auth.js";
+import { prisma } from "../lib/prisma.js";
 import { env } from "../env.js";
 import { sendJson } from "../lib/response.js";
 
@@ -35,10 +36,31 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
       return next();
     }
 
-    // 2. Fallback to legacy JWT Bearer header verification
+    // 2. Fallback to direct DB session lookup or legacy JWT Bearer verification
     const header = req.headers.authorization;
     if (header?.startsWith("Bearer ")) {
-      const token = header.slice(7);
+      const token = header.slice(7).trim();
+
+      // Check Better-Auth DB session
+      try {
+        const dbSession = await prisma.session.findUnique({
+          where: { token },
+          include: { user: true },
+        });
+
+        if (dbSession && dbSession.expiresAt > new Date()) {
+          req.user = {
+            sub: dbSession.user.id,
+            email: dbSession.user.email,
+            role: (dbSession.user.role as "CUSTOMER" | "ADMIN") || "CUSTOMER",
+          };
+          return next();
+        }
+      } catch (dbErr) {
+        console.error("DB session lookup error:", dbErr);
+      }
+
+      // Legacy JWT fallback
       try {
         const payload = jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
         req.user = payload;

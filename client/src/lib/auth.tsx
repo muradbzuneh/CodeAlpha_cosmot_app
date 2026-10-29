@@ -34,7 +34,14 @@ const Ctx = createContext<AuthCtx | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: sessionData, isPending } = authClient.useSession();
-  const [localUser, setLocalUser] = useState<User | null>(null);
+  const [localUser, setLocalUser] = useState<User | null>(() => {
+    try {
+      const saved = localStorage.getItem("cosmot-user");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   // Sync session with local state
   useEffect(() => {
@@ -78,6 +85,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLocalUser(u);
       localStorage.setItem("cosmot-user", JSON.stringify(u));
     }
+    if ((res.data as any)?.token) {
+      localStorage.setItem("cosmot-token", (res.data as any).token);
+    }
   };
 
   const register = async (email: string, password: string, name?: string) => {
@@ -98,6 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setLocalUser(u);
       localStorage.setItem("cosmot-user", JSON.stringify(u));
+    }
+    if ((res.data as any)?.token) {
+      localStorage.setItem("cosmot-token", (res.data as any).token);
     }
   };
 
@@ -143,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user: activeUser,
         token: localStorage.getItem("cosmot-token"),
-        loading: isPending,
+        loading: isPending && !localUser,
         login,
         register,
         logout,

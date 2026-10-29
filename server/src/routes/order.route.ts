@@ -7,12 +7,14 @@ import {
   updateOrderStatus,
   verifyOrderPayment,
   chapaWebhook,
+  returnOrder,
 } from "../controller/orders.js";
 
 const router = Router();
 
-// Public webhook from Chapa (must not require user bearer auth)
+// Public webhook and return redirect from Chapa (must not require user bearer auth)
 router.post("/webhook", chapaWebhook);
+router.get("/return", returnOrder);
 
 // Protected routes
 router.post("/", authenticate, createOrder);

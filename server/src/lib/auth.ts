@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { bearer } from "better-auth/plugins";
 import { prisma } from "./prisma.js";
 import { env } from "../env.js";
 import { Resend } from "resend";
@@ -12,6 +13,14 @@ export const auth = betterAuth({
   }),
   baseURL: env.BETTER_AUTH_URL || `http://localhost:${env.PORT || 5000}`,
   secret: env.BETTER_AUTH_SECRET || env.JWT_ACCESS_SECRET,
+  trustedOrigins: [
+    "http://localhost:5173",
+    "http://localhost:5000",
+    "https://code-alpha-cosmot-app.vercel.app",
+    "https://code-alpha-cosmot-app-back.vercel.app",
+    ...env.CORS_ORIGIN.split(",").map((s) => s.trim()),
+  ],
+  plugins: [bearer()],
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
@@ -84,12 +93,6 @@ export const auth = betterAuth({
       },
     },
   },
-  trustedOrigins: [
-    "http://localhost:5173",
-    "http://localhost:5000",
-    "http://localhost:3000",
-    ...(env.CORS_ORIGIN ? env.CORS_ORIGIN.split(",").map((s) => s.trim()) : []),
-  ],
 });
 
 export default auth;

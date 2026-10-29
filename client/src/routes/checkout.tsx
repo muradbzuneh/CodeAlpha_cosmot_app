@@ -12,7 +12,7 @@ type Payment = "chapa" | "cod";
 
 export function CheckoutPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
   const { lines, subtotal, discount, vat, total, promo, clear, clearPromo } = useCart();
   const [payment, setPayment] = useState<Payment>("chapa");
   const [shippingType, setShippingType] = useState<"standard" | "express">("standard");
@@ -29,10 +29,10 @@ export function CheckoutPage() {
   const [postalCode, setPostalCode] = useState("");
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       navigate({ to: "/login" });
     }
-  }, [isAuthenticated, navigate]);
+  }, [authLoading, isAuthenticated, navigate]);
 
   useEffect(() => {
     if (user) {
@@ -40,6 +40,14 @@ export function CheckoutPage() {
       if (!email && user.email) setEmail(user.email);
     }
   }, [user]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="size-8 rounded-full border-2 border-foreground border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) return null;
 

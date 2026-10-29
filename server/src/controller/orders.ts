@@ -151,8 +151,8 @@ export async function createOrder(req: Request, res: Response) {
     }
 
     // 4. Initialize Chapa payment session for Telebirr / Card / Chapa
-    const clientOrigin = env.CORS_ORIGIN.split(",")[0]?.trim() || "http://localhost:5173";
-    const serverUrl = env.BETTER_AUTH_URL || `http://localhost:${env.PORT || 5000}`;
+    const origin = req.headers.origin || req.headers.referer || "";
+    const isLocal = origin.includes("localhost") || origin.includes("127.0.0.1") || env.NODE_ENV !== "production";
 
     const [firstName, ...restName] = (order.customerName || "Customer").split(" ");
     const lastName = restName.join(" ") || "Cosmot";
@@ -166,8 +166,8 @@ export async function createOrder(req: Request, res: Response) {
         lastName,
         phoneNumber: order.phone || "",
         txRef,
-        returnUrl: `${clientOrigin}/orders?payment=success&tx_ref=${txRef}`,
-        callbackUrl: `${serverUrl}/api/orders/webhook`,
+        returnUrl: `https://code-alpha-cosmot-app-back.vercel.app/api/orders/return?tx_ref=${txRef}&env=${isLocal ? "local" : "prod"}`,
+        callbackUrl: `https://code-alpha-cosmot-app-back.vercel.app/api/orders/webhook`,
         title: "Cosmot Skincare",
         description: `Payment for Order #${order.id.slice(0, 8)}`,
       });
@@ -355,6 +355,74 @@ export async function chapaWebhook(req: Request, res: Response) {
   } catch (error) {
     console.error("Webhook processing error:", error);
     sendJson(res, 500, { error: "Webhook processing error" });
+  }
+}
+
+// GET /api/orders/return - Chapa redirect destination after customer completes payment
+export async function returnOrder(req: Request, res: Response) {
+  try {
+    const txRef = String(req.query.tx_ref || req.query.trx_ref || req.query.reference || "");
+    const envParam = String(req.query.env || "");
+    const isLocal = envParam === "local" || req.headers.host?.includes("localhost");
+
+    if (txRef) {
+      try {
+        const verifyResult = await chapa.verify(txRef);
+        const isSuccess =
+          verifyResult.status === "success" &&
+          verifyResult.data?.status?.toLowerCase() === "success";
+
+        if (isSuccess) {
+          const paymentRef =
+            verifyResult.data?.chapa_reference ||
+            verifyResult.data?.processor_reference ||
+            verifyResult.data?.reference ||
+            null;
+
+          const updated = await prisma.order.update({
+            where: { txRef },
+            data: {
+              paymentStatus: "PAID",
+              status: "PROCESSING",
+              paymentReference: paymentRef,
+            },
+            include: { items: { include: { product: true } } },
+          });
+
+          if (updated.email) {
+            sendOrderConfirmationEmail({
+              orderId: updated.id,
+              customerName: updated.customerName || "Customer",
+              email: updated.email,
+              total: updated.total,
+              subtotal: updated.subtotal,
+              discount: updated.discount,
+              vat: updated.vat,
+              shippingFee: updated.shippingFee,
+              address: updated.address || "",
+              city: updated.city || "",
+              paymentMethod: updated.paymentMethod || "Chapa",
+              items: updated.items.map((i) => ({
+                name: i.product.name,
+                quantity: i.quantity,
+                price: i.price,
+              })),
+            }).catch((err) => console.error("Email send error on return:", err));
+          }
+        }
+      } catch (err) {
+        console.error("Order verify on return error:", err);
+      }
+    }
+
+    const targetUrl = isLocal
+      ? `http://localhost:5173/orders?payment=success&tx_ref=${encodeURIComponent(txRef)}`
+      : `https://code-alpha-cosmot-app.vercel.app/orders?payment=success&tx_ref=${encodeURIComponent(txRef)}`;
+
+    res.redirect(targetUrl);
+  } catch (error) {
+    console.error("Return order error:", error);
+    res.redirect("http://localhost:5173/orders");
   }
 }
 

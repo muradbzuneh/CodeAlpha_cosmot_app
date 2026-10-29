@@ -151,12 +151,22 @@ function TrackingBar({ status, compact }: { status: string; compact?: boolean })
 
 export function OrdersPage() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [orders, setOrders] = useState<ApiOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+
+  // If redirected to production with env=local, bounce back to localhost
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const search = window.location.search;
+      if (search.includes("env=local") && window.location.hostname !== "localhost") {
+        window.location.href = `http://localhost:5173/orders${search}`;
+      }
+    }
+  }, []);
 
   const fetchOrders = () => {
     setLoading(true);
@@ -168,6 +178,8 @@ export function OrdersPage() {
   };
 
   useEffect(() => {
+    if (authLoading) return;
+
     if (!isAuthenticated) {
       navigate({ to: "/login" });
       return;
@@ -192,7 +204,15 @@ export function OrdersPage() {
     } else {
       fetchOrders();
     }
-  }, [isAuthenticated, navigate]);
+  }, [authLoading, isAuthenticated, navigate]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="size-8 rounded-full border-2 border-foreground border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) return null;
 
