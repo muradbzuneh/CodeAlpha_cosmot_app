@@ -78,7 +78,8 @@ export async function createOrder(req: Request, res: Response) {
     const grandTotal = +(taxable + vat + shippingFee).toFixed(2);
 
     const isCod = body.paymentMethod === "cod";
-    const txRef = `cosmot-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    // Max 20 characters for Chapa Global compatibility: e.g. "c_mvthxba7_8hy3" (15 chars)
+    const txRef = `c_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`.slice(0, 20);
 
     // 2. Atomic Transaction: create order + decrement stock
     const order = await prisma.$transaction(async (tx) => {
@@ -227,14 +228,23 @@ export async function verifyOrderPayment(req: Request, res: Response) {
 
     // Verify with Chapa API
     const verifyResult = await chapa.verify(txRef);
+    const isSuccess =
+      verifyResult.status === "success" &&
+      verifyResult.data?.status?.toLowerCase() === "success";
 
-    if (verifyResult.status === "success" && verifyResult.data?.status === "success") {
+    if (isSuccess) {
+      const paymentRef =
+        verifyResult.data?.chapa_reference ||
+        verifyResult.data?.processor_reference ||
+        verifyResult.data?.reference ||
+        null;
+
       const updatedOrder = await prisma.order.update({
         where: { id: order.id },
         data: {
           paymentStatus: "PAID",
           status: "PROCESSING",
-          paymentReference: verifyResult.data.reference || null,
+          paymentReference: paymentRef,
         },
         include: { items: { include: { product: true } } },
       });
@@ -279,7 +289,11 @@ export async function verifyOrderPayment(req: Request, res: Response) {
 export async function chapaWebhook(req: Request, res: Response) {
   try {
     const body = req.body;
-    const txRef = body?.tx_ref || body?.trx_ref;
+    const txRef =
+      body?.tx_ref ||
+      body?.trx_ref ||
+      body?.merchant_reference ||
+      body?.reference;
 
     if (!txRef) {
       sendJson(res, 400, { error: "Missing transaction reference" });
@@ -288,19 +302,29 @@ export async function chapaWebhook(req: Request, res: Response) {
 
     // Double check with Chapa API for safety against forged webhook events
     const verifyResult = await chapa.verify(txRef);
-    if (verifyResult.status === "success" && verifyResult.data?.status === "success") {
+    const isSuccess =
+      verifyResult.status === "success" &&
+      verifyResult.data?.status?.toLowerCase() === "success";
+
+    if (isSuccess) {
       const order = await prisma.order.findUnique({
         where: { txRef },
         include: { items: { include: { product: true } } },
       });
 
       if (order && order.paymentStatus !== "PAID") {
+        const paymentRef =
+          verifyResult.data?.chapa_reference ||
+          verifyResult.data?.processor_reference ||
+          verifyResult.data?.reference ||
+          null;
+
         await prisma.order.update({
           where: { id: order.id },
           data: {
             paymentStatus: "PAID",
             status: "PROCESSING",
-            paymentReference: verifyResult.data.reference || null,
+            paymentReference: paymentRef,
           },
         });
 
